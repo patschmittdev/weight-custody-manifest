@@ -38,5 +38,8 @@ The canonical, complete list is [`LIMITATIONS.md`](https://github.com/agentrust-
   report signature and the raw nonce at offset 4, and is validated on a live
   H100 capture and an H200. A gate built without `build_gpu_verifier` falls back
   to structural trust, and `gpu_report_verified` says so.
-- **Azure CVMs** use a vTPM-rooted attestation path (`AzureSnpVtpmProvider`), not
-  `/dev/sev-guest`; `REPORT_DATA` is paravisor-bound there.
+- **Azure CVMs** use a vTPM-rooted attestation path (`AzureSnpVtpmProvider`,
+  `AzureTdxVtpmProvider`), not `/dev/sev-guest` or `/dev/tdx-guest`; `REPORT_DATA`
+  is paravisor-bound there, and both providers need `tpm2-tools` installed. Azure
+  TDX has no vTPM freshness bundle or verifier yet, so it carries no measured
+  launch, nonce freshness or transport-key binding (#NNN).

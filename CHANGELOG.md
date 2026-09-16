@@ -6,6 +6,13 @@ uses semantic-ish versioning while pre-1.0.
 
 ## Unreleased
 
+**[docs]** Name `tpm2-tools` as a prerequisite for both Azure vTPM providers
+(getting started, README, measured launch, limitations): the Canonical
+`ubuntu-24_04-lts:cvm` image ships without it, and without it `select_provider()`
+silently returns `SoftwareProvider`. Record in LIMITATIONS that the Azure TDX path
+is validated for the DCAP quote exchange and chain verification only, with no vTPM
+freshness bundle or verifier yet (#NNN). No runtime behavior changes.
+
 **[docs]** Clarify the release-authority trust boundary: a customer who can read
 broker keys or replace verification and policy can bypass workload attestation.
 Distinguish the attested self-custody design from the reference server's mounted

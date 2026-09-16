@@ -10,6 +10,21 @@ cd weight-custody-manifest/python
 pip install -e ".[dev]"      # add ".[server]" for the reference KBS server
 ```
 
+### Azure confidential VMs
+
+Both Azure providers (`AzureSnpVtpmProvider`, `AzureTdxVtpmProvider`) read the
+HCL report from the vTPM with `tpm2-tools` and need `/dev/tpmrm0`:
+
+```bash
+sudo apt-get install -y tpm2-tools
+```
+
+Without the package both providers report unavailable, and `select_provider()`
+falls back to `SoftwareProvider` unless it is called with `require_hardware=True`;
+the error it raises then names only `/dev/sev-guest` and `/dev/tdx-guest`, not the
+missing tool. The Canonical `ubuntu-24_04-lts:cvm` image (`24.04.202608260`,
+observed on 2026-09-10) ships without it.
+
 ## Build, sign, verify a manifest
 
 ```python
