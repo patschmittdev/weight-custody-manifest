@@ -112,7 +112,12 @@ from ._quote_verify import (
     QuoteFormatError,
     verify_cert_chain,
 )
-from .azure_vtpm import AzureSnpVtpmVerifier
+from .azure_vtpm import (
+    AzureSnpVtpmVerifier,
+    AzureTdxVtpmBundle,
+    AzureTdxVtpmVerifier,
+    unwrap_azure_tdx_vtpm_bundle,
+)
 from .custody import (
     EnclaveSession,
     SessionState,
@@ -271,6 +276,9 @@ __all__ = [
     "SevSnpProvider",
     "AzureSnpVtpmProvider",
     "AzureTdxVtpmProvider",
+    "AzureTdxVtpmVerifier",
+    "AzureTdxVtpmBundle",
+    "unwrap_azure_tdx_vtpm_bundle",
     "TdxProvider",
     "NvidiaCcProvider",
     "HardwareCompositeProvider",

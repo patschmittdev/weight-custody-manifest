@@ -6,6 +6,32 @@ uses semantic-ish versioning while pre-1.0.
 
 ## Unreleased
 
+**[sdk]** Azure Intel TDX confidential VMs now produce the same measured-launch,
+freshness and channel-binding evidence as Azure SEV-SNP. `AzureTdxVtpmProvider`
+previously returned only the paravisor-bound DCAP quote, and its docstring named
+an enclosing vTPM quote that nothing ever produced, so nonce freshness, the
+transport-key binding and PCR 23 were absent on that platform. It now resets and
+extends SHA-256 PCR 23 with the approved serving-image digest, takes a quote over
+PCR 23 under the HCL-authenticated attestation key with
+`sha256(nonce || transport_key)` as qualifying data, and packs the DCAP quote,
+the HCL blob, the AK and that TPM quote into a `kind: "wcm-azure-tdx-vtpm/v1"`
+bundle in `quote_b64` (no certificate material rides at that level: the Intel PCK
+chain is inside the DCAP quote). A new `AzureTdxVtpmVerifier` checks it
+fail-closed, in order: bundle kind, RSA AK, HCL magic and TD report type byte,
+the DCAP quote against a trusted Intel SGX root with `expected_nonce=None`, the
+Intel-signed REPORT_DATA against the SHA-256 of the HCL runtime JSON and its zero
+tail, the `HCLAkPub` link to the quoting key, then PCR 23 selection, the approved
+PCR digest, the nonce and transport-key qualifying data, and the AK signature.
+The runtime-data, AK-link and PCR 23 logic is now shared with the SEV-SNP
+verifier rather than duplicated; `AzureSnpVtpmVerifier`'s behaviour, reason
+strings and tests are unchanged. `unwrap_azure_tdx_vtpm_bundle` is the one public
+place that knows the bundle's wire shape, so downstream tools that need only
+the DCAP quote do not parse it themselves. `wcm verify-quote --kind tdx` unwraps such a
+bundle and verifies the inner DCAP quote, still accepts a raw DCAP quote
+unchanged, and states on success that this CLI slice does not check the vTPM
+half. PROVISIONAL: the TDX bundle and its verifier have not yet been run against
+hardware.
+
 **[docs]** Clarify the release-authority trust boundary: a customer who can read
 broker keys or replace verification and policy can bypass workload attestation.
 Distinguish the attested self-custody design from the reference server's mounted

@@ -132,6 +132,51 @@ def test_vq_tdx_untrusted_root(capsys, tmp_path):
     assert "verified  : False" in capsys.readouterr().out
 
 
+def _azure_vtpm_bundle(tmp_path: pathlib.Path, *, kind: str) -> str:
+    """Wrap the committed Azure DCAP quote in a vTPM evidence bundle on disk."""
+    import base64
+
+    fixture = json.loads((FIXTURES / "tdx_quote_azure.json").read_text(encoding="utf-8"))
+    inner = {
+        "kind": kind,
+        "tdx_quote_b64": fixture["quote_b64"],
+        # Placeholders: this verb checks the DCAP half only.
+        "hcl_b64": base64.b64encode(b"HCLA-placeholder").decode(),
+        "ak_pem": "-----BEGIN PUBLIC KEY-----placeholder-----END PUBLIC KEY-----",
+        "tpm_quote_b64": base64.b64encode(b"placeholder").decode(),
+        "tpm_signature_b64": base64.b64encode(b"placeholder").decode(),
+    }
+    out = tmp_path / "azure-tdx-vtpm.json"
+    out.write_text(
+        json.dumps(
+            {
+                "kind": "wcm-tdx-quote/v1",
+                "source": "azure-tdx-vtpm",
+                "quote_b64": base64.b64encode(json.dumps(inner).encode()).decode(),
+                "expected_nonce": None,
+                "intel_sgx_root_ca_sha256": fixture["intel_sgx_root_ca_sha256"],
+            }
+        ),
+        encoding="utf-8",
+    )
+    return str(out)
+
+
+@pytest.mark.filterwarnings("ignore::DeprecationWarning")
+def test_vq_tdx_azure_vtpm_bundle_unwraps_inner_quote(capsys, tmp_path):
+    path = _azure_vtpm_bundle(tmp_path, kind="wcm-azure-tdx-vtpm/v1")
+    assert main(["verify-quote", "--kind", "tdx", path]) == 0
+    out = capsys.readouterr().out
+    assert "verified  : True" in out
+    assert "inner DCAP quote verified" in out
+
+
+def test_vq_tdx_rejects_unknown_bundle_kind(capsys, tmp_path):
+    path = _azure_vtpm_bundle(tmp_path, kind="wcm-azure-snp-vtpm/v1")
+    assert main(["verify-quote", "--kind", "tdx", path]) == 1
+    assert "unexpected Azure TDX vTPM bundle kind" in capsys.readouterr().out
+
+
 # -- verify-quote: GPU ---------------------------------------------------------
 
 

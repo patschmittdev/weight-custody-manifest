@@ -12,8 +12,12 @@ quote and package it as WCM ``CompositeEvidence`` for the KBS to verify:
   select_provider   - auto-select the best available, else software fallback
 
 Validation status: the two Azure vTPM providers ARE validated against live Azure
-hosts (SEV-SNP on DC2as_v5, TDX on DCes_v6 westeurope; their captured quotes
-verify through snp.py / tdx.py against the real AMD and Intel roots). The
+hosts for their hardware-report step (SEV-SNP on DC2as_v5, TDX on DCes_v6
+westeurope; their captured quotes verify through snp.py / tdx.py against the real
+AMD and Intel roots). AzureTdxVtpmProvider's vTPM freshness bundle - the PCR 23
+measured-launch extend and the AK-signed quote it packs alongside that DCAP
+quote - is PROVISIONAL: it has not yet been run end to end on a live Azure TDX
+CVM. The
 bare-metal SEV-SNP ioctl path is validated on a live GCP N2D SEV-SNP guest. The
 bare-metal TDX report ioctl path is also validated on a live GCP C3 guest;
 conversion of that TDREPORT into a remotely verifiable TDX quote remains
@@ -235,35 +239,21 @@ class TdxProvider(CpuQuoteProvider):
         )
 
 
-class AzureSnpVtpmProvider(CpuQuoteProvider):
-    """AMD SEV-SNP CPU quote on an Azure confidential VM (vTPM path).
+class _AzureVtpmProviderBase(CpuQuoteProvider):
+    """Shared Azure confidential-VM vTPM plumbing for the SNP and TDX providers.
 
-    Azure CVMs have no /dev/sev-guest; the paravisor publishes the SNP report in
-    the vTPM NV index 0x01400001, wrapped in an HCL header (validated against a
-    live Azure host - see the repo history). This provider reads that index via
-    ``tpm2_nvread`` and extracts the raw SNP report.
-
-    Caveat carried from that validation: Azure binds the report's REPORT_DATA to
-    the vTPM runtime-data hash, not a caller nonce, so ``nonce_echo`` here is the
-    structural challenge pointer while the raw report (``quote_b64``) carries the
-    Azure binding. Cryptographic quote verification (VCEK signature + AMD chain)
-    works; the KBS nonce-binding check does not apply on Azure.
+    Both Azure CVM platforms publish their hardware report in the same vTPM NV
+    index, measure the workload into the same application-owned PCR, and prove
+    freshness with the same AK-signed SHA-256 PCR 23 quote. Only the report
+    format and the certificate material differ, so everything else lives here.
     """
 
-    platform = "amd-sev-snp"
     _NV_INDEX = "0x01400001"
     _TPM_DEV = "/dev/tpmrm0"
     _AK_HANDLE = "0x81000003"
-    _THIM_URL = "http://169.254.169.254/metadata/THIM/amd/certification"
-
-    @staticmethod
-    def is_available() -> bool:
-        return os.path.exists(AzureSnpVtpmProvider._TPM_DEV) and (
-            shutil.which("tpm2_nvread") is not None
-        )
 
     def _fetch_hcl(self) -> bytes:
-        """Read the HCL report blob from the vTPM. Overridable in tests."""
+        """Read the HCL report blob from the vTPM (owner hierarchy). Overridable in tests."""
         if shutil.which("tpm2_nvread") is None:
             raise AttestationUnavailableError("tpm2_nvread not found (Azure CVM tooling)")
         try:
@@ -280,35 +270,6 @@ class AzureSnpVtpmProvider(CpuQuoteProvider):
                 f"reading vTPM NV {self._NV_INDEX} failed: {exc}"
             ) from exc
         return out.stdout
-
-    def cpu_quote(
-        self,
-        challenge: Challenge,
-        *,
-        serving_image_measurement: str,
-        assurance_tier: str = "hardware-attested",
-        transport_public_key: Optional[str] = None,
-    ) -> CpuQuote:
-        from .snp import extract_snp_report_from_hcl, parse_snp_report
-
-        hcl = self._fetch_hcl()
-        report = extract_snp_report_from_hcl(hcl)
-        parsed = parse_snp_report(report)
-        binding = _report_data_for(
-            challenge.nonce, _channel_binding(transport_public_key)
-        )[:32]
-        self._measure_workload(serving_image_measurement)
-        bundle = self._fetch_freshness_bundle(hcl, binding)
-        return CpuQuote(
-            platform=self.platform,
-            assurance_tier=assurance_tier,
-            serving_image_measurement=HashValue(serving_image_measurement),
-            nonce_echo=challenge.nonce,
-            attestation_key_id="vcek:" + parsed.chip_id[:8].hex(),
-            attestation_key_cache_age_seconds=0,
-            quote_b64=base64.b64encode(json.dumps(bundle).encode()).decode(),
-            transport_public_key=transport_public_key,
-        )
 
     def _measure_workload(self, measurement: str) -> None:
         """Reset and extend application PCR 23 with one approved event digest.
@@ -357,18 +318,24 @@ class AzureSnpVtpmProvider(CpuQuoteProvider):
                 f"Azure measured-launch PCR 23 reset/extend failed: {exc}"
             ) from exc
 
-    def _fetch_freshness_bundle(self, hcl: bytes, binding: bytes) -> dict[str, Any]:
-        """Capture the HCL-authenticated AK's fresh PCR-23 quote."""
+    def _tpm_pcr23_quote(self, binding: bytes) -> tuple[str, bytes, bytes]:
+        """Capture the HCL-authenticated AK's fresh SHA-256 PCR 23 quote.
+
+        Returns ``(ak_pem, tpms_attest, tpmt_signature)``. ``binding`` is the
+        32-byte ``sha256(nonce || transport_key)`` the quote carries as its
+        qualifying data, which is what makes the evidence fresh and
+        channel-bound rather than replayable.
+        """
         for tool in ("tpm2_readpublic", "tpm2_quote"):
             if shutil.which(tool) is None:
                 raise AttestationUnavailableError(f"{tool} not found (Azure CVM tooling)")
         try:
-            req = urllib.request.Request(self._THIM_URL, headers={"Metadata": "true"})
-            thim = json.loads(urllib.request.urlopen(req, timeout=10).read().decode())  # nosec B310
             with tempfile.TemporaryDirectory(prefix="wcm-vtpm-") as tmp:
                 ak = os.path.join(tmp, "ak.pem")
                 msg = os.path.join(tmp, "quote.msg")
                 sig = os.path.join(tmp, "quote.sig")
+                # Handle + tool names are fixed constants; the only variable is
+                # the hex-encoded qualifying data this provider computed itself.
                 subprocess.run(  # nosec B603 B607
                     ["tpm2_readpublic", "-c", self._AK_HANDLE, "-f", "pem", "-o", ak],
                     capture_output=True,
@@ -388,6 +355,70 @@ class AzureSnpVtpmProvider(CpuQuoteProvider):
                 quote = open(msg, "rb").read()
                 signature = open(sig, "rb").read()
         except (OSError, ValueError, subprocess.SubprocessError) as exc:
+            raise AttestationUnavailableError(f"Azure vTPM freshness capture failed: {exc}") from exc
+        return ak_pem, quote, signature
+
+
+class AzureSnpVtpmProvider(_AzureVtpmProviderBase):
+    """AMD SEV-SNP CPU quote on an Azure confidential VM (vTPM path).
+
+    Azure CVMs have no /dev/sev-guest; the paravisor publishes the SNP report in
+    the vTPM NV index 0x01400001, wrapped in an HCL header (validated against a
+    live Azure host - see the repo history). This provider reads that index via
+    ``tpm2_nvread`` and extracts the raw SNP report.
+
+    Caveat carried from that validation: Azure binds the report's REPORT_DATA to
+    the vTPM runtime-data hash, not a caller nonce, so ``nonce_echo`` here is the
+    structural challenge pointer while the raw report (``quote_b64``) carries the
+    Azure binding. Cryptographic quote verification (VCEK signature + AMD chain)
+    works; the KBS nonce-binding check does not apply on Azure.
+    """
+
+    platform = "amd-sev-snp"
+    _THIM_URL = "http://169.254.169.254/metadata/THIM/amd/certification"
+
+    @staticmethod
+    def is_available() -> bool:
+        return os.path.exists(AzureSnpVtpmProvider._TPM_DEV) and (
+            shutil.which("tpm2_nvread") is not None
+        )
+
+    def cpu_quote(
+        self,
+        challenge: Challenge,
+        *,
+        serving_image_measurement: str,
+        assurance_tier: str = "hardware-attested",
+        transport_public_key: Optional[str] = None,
+    ) -> CpuQuote:
+        from .snp import extract_snp_report_from_hcl, parse_snp_report
+
+        hcl = self._fetch_hcl()
+        report = extract_snp_report_from_hcl(hcl)
+        parsed = parse_snp_report(report)
+        binding = _report_data_for(
+            challenge.nonce, _channel_binding(transport_public_key)
+        )[:32]
+        self._measure_workload(serving_image_measurement)
+        bundle = self._fetch_freshness_bundle(hcl, binding)
+        return CpuQuote(
+            platform=self.platform,
+            assurance_tier=assurance_tier,
+            serving_image_measurement=HashValue(serving_image_measurement),
+            nonce_echo=challenge.nonce,
+            attestation_key_id="vcek:" + parsed.chip_id[:8].hex(),
+            attestation_key_cache_age_seconds=0,
+            quote_b64=base64.b64encode(json.dumps(bundle).encode()).decode(),
+            transport_public_key=transport_public_key,
+        )
+
+    def _fetch_freshness_bundle(self, hcl: bytes, binding: bytes) -> dict[str, Any]:
+        """Pair the AK's fresh PCR-23 quote with Azure's THIM VCEK and AMD chain."""
+        ak_pem, quote, signature = self._tpm_pcr23_quote(binding)
+        try:
+            req = urllib.request.Request(self._THIM_URL, headers={"Metadata": "true"})
+            thim = json.loads(urllib.request.urlopen(req, timeout=10).read().decode())  # nosec B310
+        except (OSError, ValueError) as exc:
             raise AttestationUnavailableError(f"Azure vTPM freshness capture failed: {exc}") from exc
         chain = self._split_pems(thim.get("certificateChain", ""))
         vcek = thim.get("vcekCert") or thim.get("vcek") or thim.get("vcekCertificate")
@@ -409,7 +440,7 @@ class AzureSnpVtpmProvider(CpuQuoteProvider):
         return [part + marker + "\n" for part in blob.split(marker) if "BEGIN CERTIFICATE" in part]
 
 
-class AzureTdxVtpmProvider(CpuQuoteProvider):
+class AzureTdxVtpmProvider(_AzureVtpmProviderBase):
     """Intel TDX CPU quote on an Azure confidential VM (vTPM paravisor path).
 
     Azure TDX CVMs have no /dev/tdx-guest. The paravisor publishes a TD report in
@@ -417,18 +448,25 @@ class AzureTdxVtpmProvider(CpuQuoteProvider):
     report, a TD report is NOT self-verifiable: it carries no PCK signature. So
     this provider extracts the TD report and exchanges it for a full DCAP quote at
     the Azure IMDS quote service (/acc/tdquote); that quote (VCEK-free, QE + PCK
-    chain to the Intel SGX Root CA) is what ``tdx.py`` verifies. Validated on a
-    live Azure DCes_v6 host in westeurope.
+    chain to the Intel SGX Root CA) is what ``tdx.py`` verifies. That DCAP step is
+    validated on a live Azure DCes_v6 host in westeurope.
 
     Caveat (mirrors ``AzureSnpVtpmProvider``): Azure binds the TD report's
     REPORT_DATA to the vTPM runtime-data/AK hash, not a caller nonce, so
-    ``verify_tdx_quote`` must be called with ``expected_nonce=None`` here and
-    freshness comes from the enclosing vTPM quote, not the TD report field.
+    ``verify_tdx_quote`` must be called with ``expected_nonce=None`` here.
+    Freshness and channel binding therefore come from a separate vTPM step this
+    provider performs: it resets and extends SHA-256 PCR 23 with the approved
+    serving-image digest, then takes an AK-signed quote over PCR 23 whose
+    qualifying data is ``sha256(nonce || transport_key)``. The DCAP quote, the
+    HCL blob, the AK and that TPM quote ship together as a
+    ``wcm-azure-tdx-vtpm/v1`` bundle in ``quote_b64``, which
+    ``wcm.azure_vtpm.AzureTdxVtpmVerifier`` checks fail-closed.
+
+    PROVISIONAL: not yet validated on hardware. The bundle assembly and the
+    verifier have not been exercised end to end on a live Azure TDX CVM.
     """
 
     platform = "intel-tdx"
-    _NV_INDEX = "0x01400001"
-    _TPM_DEV = "/dev/tpmrm0"
     _HCL_TDREPORT_OFFSET = 32
     _TDREPORT_LEN = 1024
     _TDQUOTE_URL = "http://169.254.169.254/acc/tdquote"  # fixed Azure IMDS link-local host
@@ -448,23 +486,6 @@ class AzureTdxVtpmProvider(CpuQuoteProvider):
             return False
         off = AzureTdxVtpmProvider._HCL_TDREPORT_OFFSET
         return hcl[:4] == b"HCLA" and len(hcl) > off and hcl[off] == 0x81
-
-    def _fetch_hcl(self) -> bytes:
-        """Read the HCL report blob from the vTPM (owner hierarchy). Overridable in tests."""
-        if shutil.which("tpm2_nvread") is None:
-            raise AttestationUnavailableError("tpm2_nvread not found (Azure CVM tooling)")
-        try:
-            out = subprocess.run(  # nosec B603 B607
-                ["tpm2_nvread", "-C", "o", self._NV_INDEX],
-                capture_output=True,
-                timeout=30,
-                check=True,
-            )
-        except (OSError, subprocess.SubprocessError) as exc:
-            raise AttestationUnavailableError(
-                f"reading vTPM NV {self._NV_INDEX} failed: {exc}"
-            ) from exc
-        return out.stdout
 
     def _fetch_quote(self, tdreport: bytes) -> bytes:
         """Exchange a TD report for a DCAP quote at the Azure IMDS service. Overridable in tests."""
@@ -494,20 +515,49 @@ class AzureTdxVtpmProvider(CpuQuoteProvider):
         transport_public_key: Optional[str] = None,
     ) -> CpuQuote:
         hcl = self._fetch_hcl()
-        tdreport = hcl[self._HCL_TDREPORT_OFFSET : self._HCL_TDREPORT_OFFSET + self._TDREPORT_LEN]
-        quote = self._fetch_quote(tdreport)
+        off = self._HCL_TDREPORT_OFFSET
+        if hcl[:4] != b"HCLA" or len(hcl) <= off or hcl[off] != 0x81:
+            raise AttestationUnavailableError(
+                "vTPM NV 0x01400001 does not hold a TDX HCL report"
+            )
+        tdreport = hcl[off : off + self._TDREPORT_LEN]
+        dcap = self._fetch_quote(tdreport)
+        binding = _report_data_for(
+            challenge.nonce, _channel_binding(transport_public_key)
+        )[:32]
+        self._measure_workload(serving_image_measurement)
+        bundle = self._fetch_freshness_bundle(hcl, dcap, binding)
         return CpuQuote(
             platform=self.platform,
             assurance_tier=assurance_tier,
             serving_image_measurement=HashValue(serving_image_measurement),
             nonce_echo=challenge.nonce,
-            # REPORT_DATA is Azure-vTPM-bound, not nonce-bound (see class docstring);
-            # the transport key's hardware binding likewise rides the vTPM quote.
+            # The TD report's REPORT_DATA is Azure-vTPM-bound, not nonce-bound
+            # (see class docstring); the nonce and the transport key's hardware
+            # binding ride the vTPM PCR 23 quote inside the bundle instead.
             attestation_key_id="tdx-quote:azure-vtpm",
             attestation_key_cache_age_seconds=0,
-            quote_b64=base64.b64encode(quote).decode(),
+            quote_b64=base64.b64encode(json.dumps(bundle).encode()).decode(),
             transport_public_key=transport_public_key,
         )
+
+    def _fetch_freshness_bundle(
+        self, hcl: bytes, dcap_quote: bytes, binding: bytes
+    ) -> dict[str, Any]:
+        """Pack the DCAP quote, the HCL blob and the AK's fresh PCR-23 quote.
+
+        No certificate material rides at this level: the Intel PCK chain is
+        embedded in the DCAP quote itself.
+        """
+        ak_pem, quote, signature = self._tpm_pcr23_quote(binding)
+        return {
+            "kind": "wcm-azure-tdx-vtpm/v1",
+            "tdx_quote_b64": base64.b64encode(dcap_quote).decode(),
+            "hcl_b64": base64.b64encode(hcl).decode(),
+            "ak_pem": ak_pem,
+            "tpm_quote_b64": base64.b64encode(quote).decode(),
+            "tpm_signature_b64": base64.b64encode(signature).decode(),
+        }
 
 
 # ---------------------------------------------------------------------------
