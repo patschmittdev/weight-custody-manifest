@@ -300,10 +300,11 @@ class AzureSnpVtpmVerifier:
 class AzureTdxVtpmVerifier:
     """Verify an Azure Intel TDX DCAP quote plus fresh AK-signed vTPM evidence.
 
-    PROVISIONAL: not yet validated on hardware. The HCL layout, the runtime-data
-    binding and the TPM quote format are taken from a captured Azure
-    ``Standard_DC4es_v6`` TD report, but no end-to-end release has yet been run
-    against a live Azure TDX CVM with this verifier.
+    PROVISIONAL, validated once: the HCL layout, the runtime-data binding and
+    the TPM quote format were taken from a captured Azure ``Standard_DC4es_v6``
+    TD report, and one end-to-end run on a live TD of that SKU (westus3,
+    2026-09-16) verified through this class. The label stands until a
+    live-validation receipt is captured with the receipt tool.
 
     ``quote_b64`` is base64 JSON with ``kind`` ``wcm-azure-tdx-vtpm/v1`` plus
     ``tdx_quote_b64``, ``hcl_b64``, ``ak_pem``, ``tpm_quote_b64`` and

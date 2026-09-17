@@ -29,8 +29,9 @@ place that knows the bundle's wire shape, so downstream tools that need only
 the DCAP quote do not parse it themselves. `wcm verify-quote --kind tdx` unwraps such a
 bundle and verifies the inner DCAP quote, still accepts a raw DCAP quote
 unchanged, and states on success that this CLI slice does not check the vTPM
-half. PROVISIONAL: the TDX bundle and its verifier have not yet been run against
-hardware.
+half. PROVISIONAL, validated once: the bundle and verifier were run end to end
+on a live Azure `Standard_DC4es_v6` TD (westus3, 2026-09-16); the label stands
+until the live-validation receipt lands.
 
 **[docs]** Clarify the release-authority trust boundary: a customer who can read
 broker keys or replace verification and policy can bypass workload attestation.

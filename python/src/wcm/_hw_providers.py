@@ -16,8 +16,10 @@ hosts for their hardware-report step (SEV-SNP on DC2as_v5, TDX on DCes_v6
 westeurope; their captured quotes verify through snp.py / tdx.py against the real
 AMD and Intel roots). AzureTdxVtpmProvider's vTPM freshness bundle - the PCR 23
 measured-launch extend and the AK-signed quote it packs alongside that DCAP
-quote - is PROVISIONAL: it has not yet been run end to end on a live Azure TDX
-CVM. The
+quote - is PROVISIONAL but no longer unvalidated: it was run end to end on a
+live Azure Standard_DC4es_v6 TD (westus3, 2026-09-16), where
+AzureTdxVtpmVerifier accepted the real bundle. Provisional stands until a
+live-validation receipt is captured with the receipt tool. The
 bare-metal SEV-SNP ioctl path is validated on a live GCP N2D SEV-SNP guest. The
 bare-metal TDX report ioctl path is also validated on a live GCP C3 guest;
 conversion of that TDREPORT into a remotely verifiable TDX quote remains
@@ -462,8 +464,10 @@ class AzureTdxVtpmProvider(_AzureVtpmProviderBase):
     ``wcm-azure-tdx-vtpm/v1`` bundle in ``quote_b64``, which
     ``wcm.azure_vtpm.AzureTdxVtpmVerifier`` checks fail-closed.
 
-    PROVISIONAL: not yet validated on hardware. The bundle assembly and the
-    verifier have not been exercised end to end on a live Azure TDX CVM.
+    PROVISIONAL, validated once: the bundle assembly and
+    ``AzureTdxVtpmVerifier`` were exercised end to end on a live Azure
+    ``Standard_DC4es_v6`` TD (westus3, 2026-09-16). The label stands until a
+    live-validation receipt is captured with the receipt tool.
     """
 
     platform = "intel-tdx"
