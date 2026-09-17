@@ -9,6 +9,13 @@ never carries the root itself, and nothing in the suite fetches one.
 | File | Subject | DER SHA-256 | Why it is here |
 | --- | --- | --- | --- |
 | `out-of-chain-root.pem` | `CN=wcm-conformance-out-of-chain-root, O=WCM conformance suite` | `e2993cf147a1b4198a2cbe4d9e7517082773b0cbdcb5186099e7aafe3acbbdc2` | The untrusted anchor in the refusal matrix. Shipped so every runner fails that case for the same reason. |
+| `intel-sgx-root-ca.pem` | `C=US, ST=CA, L=Santa Clara, O=Intel Corporation, CN=Intel SGX Root CA` | `44a0196b2b99f889b8e149e95b807a350e7424964399e885a7cbb8ccfab674d3` | The anchor for the committed TDX capture. Intel publishes it, it is the same digest `wcm.cli` already pins as `INTEL_SGX_ROOT_CA_SHA256`, and a vendor vector whose root nobody staged fails the reference self-test for a reason about staging rather than about the capture. |
+
+Staging Intel's root here rather than leaving it to `WCM_CONFORMANCE_ROOTS` is a
+deliberate exception to the rule below, and it is only sound because the digest
+is pinned out of band: `wcm.cli.INTEL_SGX_ROOT_CA_SHA256` carries the same value
+independently of any vector, so the capture is not anchoring itself. Read this
+row as one trust decision, not as permission to add the next root by copying it.
 
 The out-of-chain root is a test certificate. It signs nothing, it anchors
 nothing, and it protects nothing. It exists so that the `out-of-chain-root`

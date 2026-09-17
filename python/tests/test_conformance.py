@@ -340,9 +340,13 @@ def test_vector_ids_are_globally_unique_and_match_filenames() -> None:
 
 def test_load_vectors_filters() -> None:
     assert load_vectors(level="L4") == load_vectors(kind="lineage")
-    assert load_vectors(level="L2") == load_vectors(kind="gate")
+    # L2 has two kinds: the gate scenarios and the vendor captures. load_vectors
+    # walks kind directories in sorted order, so gate comes before vendor.
+    assert load_vectors(level="L2") == load_vectors(kind="gate") + load_vectors(
+        kind="vendor"
+    )
     assert load_vectors(level="L3") == load_vectors(kind="custody")
-    # L1 is the only level with two kinds.
+    # L1 also has two kinds.
     assert len(load_vectors(level="L1")) == len(
         load_vectors(kind="manifest")
     ) + len(load_vectors(kind="signature"))

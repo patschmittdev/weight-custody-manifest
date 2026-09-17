@@ -13,11 +13,11 @@ gets scored.
 | Level | Title | Vectors | Shape |
 | --- | --- | --- | --- |
 | L1 | Manifest and joint signature | **32** | documents |
-| L2 | Attestation-gated release | **37** | scenarios |
+| L2 | Attestation-gated release | **38** | scenarios |
 | L3 | Runtime custody | **12** | scenarios |
 | L4 | Derivative lineage | **10** | documents |
 
-91 vectors. All four levels are vectored and **every reportable error code is
+92 vectors. All four levels are vectored and **every reportable error code is
 exercised by at least one vector**, which a test enforces. L1 and L4 ask a question
 about a document. L2 and L3 ask what a system does over *time*, so their vectors
 are ordered scenarios (see [Scenario vectors](#scenario-vectors)).
@@ -398,9 +398,16 @@ the derived ones and could not be scored honestly either, since this kind has no
 The machine-readable form is
 [`schema/wcm-vendor-vector-v1.schema.json`](../schema/wcm-vendor-vector-v1.schema.json).
 
-No captures are committed under this kind yet. The format lands first so that
-captures fit the format rather than the format bending around whichever capture
-arrives first.
+The format landed first so that captures fit the format rather than the format
+bending around whichever capture arrived first. One capture is committed under
+this kind today, `accept-tdx-azure-attestation-key`: an Azure
+`Standard_DC4es_v6` confidential VM in westus3, quoted on 2026-09-16 through the
+IMDS `/acc/tdquote` exchange. It declares the `attestation-key` binding, because
+the Azure paravisor fills `REPORT_DATA` with the digest of the HCL runtime data
+carrying the vTPM attestation key and the guest never chooses a nonce. It chains
+to the Intel SGX Root CA, which is staged in [`roots/`](roots/README.md) rather
+than left to the runner, because a capture nobody can anchor fails the reference
+self-test for a reason that is about staging rather than about the capture.
 
 ## Vector format
 

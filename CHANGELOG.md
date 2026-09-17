@@ -6,6 +6,18 @@ uses semantic-ish versioning while pre-1.0.
 
 ## Unreleased
 
+**[conformance]** The first vendor vector taken from real silicon
+(`accept-tdx-azure-attestation-key`): an Intel TDX quote from an Azure
+`Standard_DC4es_v6` confidential VM in westus3, captured 2026-09-16 through the
+IMDS `/acc/tdquote` exchange. It declares the `attestation-key` binding, because
+the paravisor fills `REPORT_DATA` with the digest of the HCL runtime data
+carrying the vTPM attestation key, so the guest chooses no nonce and the capture
+asserts no caller freshness at all. The refusal matrix is derived by the runner
+as it is for every capture, and all six cases refuse on these bytes. The Intel
+SGX Root CA is now staged in `conformance/roots/`; its DER digest is the value
+`wcm.cli` already pinned as `INTEL_SGX_ROOT_CA_SHA256`, so the capture anchors
+to a root named out of band rather than to one it carries.
+
 **[docs]** Clarify the release-authority trust boundary: a customer who can read
 broker keys or replace verification and policy can bypass workload attestation.
 Distinguish the attested self-custody design from the reference server's mounted

@@ -6,7 +6,7 @@ Published for review and comment, **not for production**. Publication of the ope
 
 - **Specification** (`SPEC.md` v0.15): four layers (manifest, attestation-gated release, runtime custody, derivative lineage), transparency log, guarantee-scope honesty (§3.6), a model-signing provenance interop (§3.9), and the open questions in §8.
 - **Manifest JSON Schema** (`schema/`), the machine-readable form of §3.1, **frozen at v1** and additive-only. One constraint (`derived_from` != `weights_hash`) is not expressible in JSON Schema and stays verifier-side, documented rather than glossed.
-- **Conformance suite** (`conformance/`): 91 language-neutral vectors plus a scoring contract, run by `wcm conformance`. **All four levels are vectored and every reportable error code is exercised** - L1 and L4 over documents, L2 (the release gate, policy *and* cryptographic quote verification) and L3 (runtime custody) as time-ordered scenarios with an injected clock. The runner prints its remaining limits on every run.
+- **Conformance suite** (`conformance/`): 92 language-neutral vectors plus a scoring contract, run by `wcm conformance`. **All four levels are vectored and every reportable error code is exercised** - L1 and L4 over documents, L2 (the release gate, policy *and* cryptographic quote verification) and L3 (runtime custody) as time-ordered scenarios with an injected clock. The runner prints its remaining limits on every run.
 - **Threat model** (`THREAT-MODEL.md`): assets, TCB, adversaries, threats, residual risk.
 - **Python reference SDK** (`python/`, published on PyPI): the full protocol -
   - Layer 1 joint signing + verification (Ed25519, ML-DSA-65, and hybrid profiles)
