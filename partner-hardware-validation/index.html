@@ -6,31 +6,33 @@
       <meta charset="utf-8">
       <meta name="viewport" content="width=device-width,initial-scale=1">
       
-        <meta name="description" content="An open, pre-1.0 specification for releasing model weights only to an approved, attested runtime, with the guarantee boundary stated plainly.">
+        <meta name="description" content="This packet starts the controlled-host work tracked in #149.">
       
       
       
-        <link rel="canonical" href="https://wcm.agentrust-io.com/">
+        <link rel="canonical" href="https://wcm.agentrust-io.com/partner-hardware-validation/">
       
       
+        <link rel="prev" href="../broker-restricted-firmware/">
       
-        <link rel="next" href="getting-started/">
+      
+        <link rel="next" href="../protected-runtime-evidence/">
       
       
         
       
       
-      <link rel="icon" href="assets/images/favicon.png">
+      <link rel="icon" href="../assets/images/favicon.png">
       <meta name="generator" content="mkdocs-1.6.1, mkdocs-material-9.7.7">
     
     
-  <title>Weight Custody Manifest: key release only to attested runtimes</title>
+  <title>Partner hardware validation - Weight Custody Manifest</title>
 
     
-      <link rel="stylesheet" href="assets/stylesheets/main.ec1eaa64.min.css">
+      <link rel="stylesheet" href="../assets/stylesheets/main.ec1eaa64.min.css">
       
         
-        <link rel="stylesheet" href="assets/stylesheets/palette.ab4e12ef.min.css">
+        <link rel="stylesheet" href="../assets/stylesheets/palette.ab4e12ef.min.css">
       
       
 
@@ -45,7 +47,7 @@
     
       <link rel="stylesheet" href="https://agentrust-io.com/design-system.css?v=22">
     
-    <script>__md_scope=new URL(".",location),__md_hash=e=>[...e].reduce(((e,_)=>(e<<5)-e+_.charCodeAt(0)),0),__md_get=(e,_=localStorage,t=__md_scope)=>JSON.parse(_.getItem(t.pathname+"."+e)),__md_set=(e,_,t=localStorage,a=__md_scope)=>{try{t.setItem(a.pathname+"."+e,JSON.stringify(_))}catch(e){}}</script>
+    <script>__md_scope=new URL("..",location),__md_hash=e=>[...e].reduce(((e,_)=>(e<<5)-e+_.charCodeAt(0)),0),__md_get=(e,_=localStorage,t=__md_scope)=>JSON.parse(_.getItem(t.pathname+"."+e)),__md_set=(e,_,t=localStorage,a=__md_scope)=>{try{t.setItem(a.pathname+"."+e,JSON.stringify(_))}catch(e){}}</script>
     
       
 
@@ -62,9 +64,9 @@
 
   <meta property="og:type" content="website">
   <meta property="og:site_name" content="AgenTrust">
-  <meta property="og:title" content="Weight Custody Manifest: key release only to attested runtimes">
-  <meta property="og:description" content="An open, pre-1.0 specification for releasing model weights only to an approved, attested runtime, with the guarantee boundary stated plainly.">
-  <meta property="og:url" content="https://wcm.agentrust-io.com/">
+  <meta property="og:title" content="Partner hardware validation - Weight Custody Manifest">
+  <meta property="og:description" content="This packet starts the controlled-host work tracked in #149.">
+  <meta property="og:url" content="https://wcm.agentrust-io.com/partner-hardware-validation/">
   <meta property="og:locale" content="en_US">
   <meta property="og:image" content="https://wcm.agentrust-io.com/assets/og.png">
   <meta property="og:image:width" content="1200">
@@ -72,8 +74,8 @@
   <meta property="og:image:alt" content="Weight Custody Manifest: release model weights only to an attested runtime">
 
   <meta name="twitter:card" content="summary_large_image">
-  <meta name="twitter:title" content="Weight Custody Manifest: key release only to attested runtimes">
-  <meta name="twitter:description" content="An open, pre-1.0 specification for releasing model weights only to an approved, attested runtime, with the guarantee boundary stated plainly.">
+  <meta name="twitter:title" content="Partner hardware validation - Weight Custody Manifest">
+  <meta name="twitter:description" content="This packet starts the controlled-host work tracked in #149.">
   <meta name="twitter:image" content="https://wcm.agentrust-io.com/assets/og.png">
 
   <script type="application/ld+json">
@@ -104,36 +106,22 @@
         "publisher": { "@id": "https://agentrust-io.com/#organization" }
       },
       {
-        "@type": "WebPage",
-        "@id": "https://wcm.agentrust-io.com/#page",
-        "url": "https://wcm.agentrust-io.com/",
-        "name": "Weight Custody Manifest: key release only to attested runtimes",
-        "headline": "Weight Custody Manifest: key release only to attested runtimes",
-        "description": "An open, pre-1.0 specification for releasing model weights only to an approved, attested runtime, with the guarantee boundary stated plainly.",
+        "@type": "TechArticle",
+        "@id": "https://wcm.agentrust-io.com/partner-hardware-validation/#page",
+        "url": "https://wcm.agentrust-io.com/partner-hardware-validation/",
+        "name": "Partner hardware validation - Weight Custody Manifest",
+        "headline": "Partner hardware validation - Weight Custody Manifest",
+        "description": "This packet starts the controlled-host work tracked in #149.",
         "inLanguage": "en",
         "isPartOf": { "@id": "https://wcm.agentrust-io.com/#website" },
         "publisher": { "@id": "https://agentrust-io.com/#organization" }
       },
       {
-        "@type": "TechArticle",
-        "@id": "https://wcm.agentrust-io.com/#specification",
-        "name": "Weight Custody Manifest (WCM)",
-        "headline": "Weight Custody Manifest (WCM)",
-        "description": "An open, pre-1.0 specification for releasing model weights only to an approved, attested runtime. Against an operator who physically owns the hardware it offers accountability, not cryptographic custody.",
-        "url": "https://wcm.agentrust-io.com/",
-        "license": "https://www.apache.org/licenses/LICENSE-2.0",
-        "publisher": { "@id": "https://agentrust-io.com/#organization" }
-      },
-      {
-        "@type": "SoftwareSourceCode",
-        "@id": "https://wcm.agentrust-io.com/#sdk",
-        "name": "weight-custody-manifest",
-        "description": "Reference Python SDK for WCM. Runs the portable conformance vectors offline; they are a self-test, not certification or a hardware deployment test.",
-        "url": "https://pypi.org/project/weight-custody-manifest/",
-        "codeRepository": "https://github.com/agentrust-io/weight-custody-manifest",
-        "programmingLanguage": "Python",
-        "license": "https://www.apache.org/licenses/LICENSE-2.0",
-        "author": { "@id": "https://agentrust-io.com/#organization" }
+        "@type": "BreadcrumbList",
+        "itemListElement": [
+          { "@type": "ListItem", "position": 1, "name": "Weight Custody Manifest", "item": "https://wcm.agentrust-io.com/" },
+          { "@type": "ListItem", "position": 2, "name": "Partner hardware validation - Weight Custody Manifest", "item": "https://wcm.agentrust-io.com/partner-hardware-validation/" }
+        ]
       }
     ]
   }
@@ -158,7 +146,7 @@
     <div data-md-component="skip">
       
         
-        <a href="#release-model-weights-only-to-an-attested-runtime" class="md-skip">
+        <a href="#partner-hardware-validation-first-execution-packet" class="md-skip">
           Skip to content
         </a>
       
@@ -174,7 +162,7 @@
 
 <header class="md-header md-header--shadow md-header--lifted" data-md-component="header">
   <nav class="md-header__inner md-grid" aria-label="Header">
-    <a href="." title="Weight Custody Manifest" class="md-header__button md-logo" aria-label="Weight Custody Manifest" data-md-component="logo">
+    <a href=".." title="Weight Custody Manifest" class="md-header__button md-logo" aria-label="Weight Custody Manifest" data-md-component="logo">
       
   
   <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 8a3 3 0 0 0 3-3 3 3 0 0 0-3-3 3 3 0 0 0-3 3 3 3 0 0 0 3 3m0 3.54C9.64 9.35 6.5 8 3 8v11c3.5 0 6.64 1.35 9 3.54 2.36-2.19 5.5-3.54 9-3.54V8c-3.5 0-6.64 1.35-9 3.54"/></svg>
@@ -194,7 +182,7 @@
         <div class="md-header__topic" data-md-component="header-topic">
           <span class="md-ellipsis">
             
-              Weight Custody Manifest: key release only to attested runtimes
+              Partner hardware validation
             
           </span>
         </div>
@@ -299,11 +287,9 @@
   
   
   
-    
   
-  
-    <li class="md-tabs__item md-tabs__item--active">
-      <a href="." class="md-tabs__link">
+    <li class="md-tabs__item">
+      <a href=".." class="md-tabs__link">
         
   
   
@@ -324,7 +310,7 @@
     
     
       <li class="md-tabs__item">
-        <a href="getting-started/" class="md-tabs__link">
+        <a href="../getting-started/" class="md-tabs__link">
           
   
   
@@ -344,7 +330,7 @@
     
     
       <li class="md-tabs__item">
-        <a href="spec-overview/" class="md-tabs__link">
+        <a href="../spec-overview/" class="md-tabs__link">
           
   
   
@@ -360,11 +346,13 @@
   
   
   
+    
+  
   
     
     
-      <li class="md-tabs__item">
-        <a href="reference-kbs/" class="md-tabs__link">
+      <li class="md-tabs__item md-tabs__item--active">
+        <a href="../reference-kbs/" class="md-tabs__link">
           
   
   
@@ -384,7 +372,7 @@
     
     
       <li class="md-tabs__item">
-        <a href="roadmap/" class="md-tabs__link">
+        <a href="../roadmap/" class="md-tabs__link">
           
   
   
@@ -413,9 +401,7 @@
           
             
               
-                
-              
-              <div class="md-sidebar md-sidebar--primary" data-md-component="sidebar" data-md-type="navigation" hidden>
+              <div class="md-sidebar md-sidebar--primary" data-md-component="sidebar" data-md-type="navigation" >
                 <div class="md-sidebar__scrollwrap">
                   <div class="md-sidebar__inner">
                     
@@ -426,7 +412,7 @@
 
 <nav class="md-nav md-nav--primary md-nav--lifted" aria-label="Navigation" data-md-level="0">
   <label class="md-nav__title" for="__drawer">
-    <a href="." title="Weight Custody Manifest" class="md-nav__button md-logo" aria-label="Weight Custody Manifest" data-md-component="logo">
+    <a href=".." title="Weight Custody Manifest" class="md-nav__button md-logo" aria-label="Weight Custody Manifest" data-md-component="logo">
       
   
   <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 8a3 3 0 0 0 3-3 3 3 0 0 0-3-3 3 3 0 0 0-3 3 3 3 0 0 0 3 3m0 3.54C9.64 9.35 6.5 8 3 8v11c3.5 0 6.64 1.35 9 3.54 2.36-2.19 5.5-3.54 9-3.54V8c-3.5 0-6.64 1.35-9 3.54"/></svg>
@@ -453,37 +439,10 @@
       
   
   
-    
   
   
-  
-    <li class="md-nav__item md-nav__item--active">
-      
-      <input class="md-nav__toggle md-toggle" type="checkbox" id="__toc">
-      
-      
-        
-      
-      
-        <label class="md-nav__link md-nav__link--active" for="__toc">
-          
-  
-  
-  <span class="md-ellipsis">
-    
-  
-    Home
-  
-
-    
-  </span>
-  
-  
-
-          <span class="md-nav__icon md-icon"></span>
-        </label>
-      
-      <a href="." class="md-nav__link md-nav__link--active">
+    <li class="md-nav__item">
+      <a href=".." class="md-nav__link">
         
   
   
@@ -499,103 +458,6 @@
   
 
       </a>
-      
-        
-
-<nav class="md-nav md-nav--secondary" aria-label="Table of contents">
-  
-  
-  
-    
-  
-  
-    <label class="md-nav__title" for="__toc">
-      <span class="md-nav__icon md-icon"></span>
-      Table of contents
-    </label>
-    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
-      
-        <li class="md-nav__item">
-  <a href="#the-trust-direction" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        The trust direction
-      
-    </span>
-  </a>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#honest-guarantee-scope" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Honest guarantee scope
-      
-    </span>
-  </a>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#what-is-checked-today" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        What is checked today
-      
-    </span>
-  </a>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#try-it" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Try it
-      
-    </span>
-  </a>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#where-it-fits" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Where it fits
-      
-    </span>
-  </a>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#where-to-go-next" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Where to go next
-      
-    </span>
-  </a>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#get-involved" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Get involved
-      
-    </span>
-  </a>
-  
-</li>
-      
-    </ul>
-  
-</nav>
-      
     </li>
   
 
@@ -659,7 +521,7 @@
   
   
     <li class="md-nav__item">
-      <a href="getting-started/" class="md-nav__link">
+      <a href="../getting-started/" class="md-nav__link">
         
   
   
@@ -687,7 +549,7 @@
   
   
     <li class="md-nav__item">
-      <a href="tutorials/how-it-works/" class="md-nav__link">
+      <a href="../tutorials/how-it-works/" class="md-nav__link">
         
   
   
@@ -774,7 +636,7 @@
   
   
     <li class="md-nav__item">
-      <a href="spec-overview/" class="md-nav__link">
+      <a href="../spec-overview/" class="md-nav__link">
         
   
   
@@ -802,7 +664,7 @@
   
   
     <li class="md-nav__item">
-      <a href="measured-launch/" class="md-nav__link">
+      <a href="../measured-launch/" class="md-nav__link">
         
   
   
@@ -830,7 +692,7 @@
   
   
     <li class="md-nav__item">
-      <a href="certificate-policy/" class="md-nav__link">
+      <a href="../certificate-policy/" class="md-nav__link">
         
   
   
@@ -858,7 +720,7 @@
   
   
     <li class="md-nav__item">
-      <a href="oms-interoperability/" class="md-nav__link">
+      <a href="../oms-interoperability/" class="md-nav__link">
         
   
   
@@ -886,7 +748,7 @@
   
   
     <li class="md-nav__item">
-      <a href="threat-model/" class="md-nav__link">
+      <a href="../threat-model/" class="md-nav__link">
         
   
   
@@ -914,7 +776,7 @@
   
   
     <li class="md-nav__item">
-      <a href="deployment-trust/" class="md-nav__link">
+      <a href="../deployment-trust/" class="md-nav__link">
         
   
   
@@ -942,7 +804,7 @@
   
   
     <li class="md-nav__item">
-      <a href="conformance/" class="md-nav__link">
+      <a href="../conformance/" class="md-nav__link">
         
   
   
@@ -974,26 +836,31 @@
       
   
   
+    
   
   
+  
     
     
     
     
+      
+        
+        
       
       
         
       
     
     
-    <li class="md-nav__item md-nav__item--nested">
+    <li class="md-nav__item md-nav__item--active md-nav__item--section md-nav__item--nested">
       
         
         
-        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_4" >
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_4" checked>
         
           
-          <label class="md-nav__link" for="__nav_4" id="__nav_4_label" tabindex="0">
+          <label class="md-nav__link" for="__nav_4" id="__nav_4_label" tabindex="">
             
   
   
@@ -1011,7 +878,7 @@
             <span class="md-nav__icon md-icon"></span>
           </label>
         
-        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_4_label" aria-expanded="false">
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_4_label" aria-expanded="true">
           <label class="md-nav__title" for="__nav_4">
             <span class="md-nav__icon md-icon"></span>
             
@@ -1029,7 +896,7 @@
   
   
     <li class="md-nav__item">
-      <a href="reference-kbs/" class="md-nav__link">
+      <a href="../reference-kbs/" class="md-nav__link">
         
   
   
@@ -1057,7 +924,7 @@
   
   
     <li class="md-nav__item">
-      <a href="provisioned-broker-service/" class="md-nav__link">
+      <a href="../provisioned-broker-service/" class="md-nav__link">
         
   
   
@@ -1085,7 +952,7 @@
   
   
     <li class="md-nav__item">
-      <a href="owner-provisioning-client/" class="md-nav__link">
+      <a href="../owner-provisioning-client/" class="md-nav__link">
         
   
   
@@ -1113,7 +980,7 @@
   
   
     <li class="md-nav__item">
-      <a href="provisioning-lifecycle/" class="md-nav__link">
+      <a href="../provisioning-lifecycle/" class="md-nav__link">
         
   
   
@@ -1141,7 +1008,7 @@
   
   
     <li class="md-nav__item">
-      <a href="broker-deployment-identity/" class="md-nav__link">
+      <a href="../broker-deployment-identity/" class="md-nav__link">
         
   
   
@@ -1169,7 +1036,7 @@
   
   
     <li class="md-nav__item">
-      <a href="broker-boot-loader/" class="md-nav__link">
+      <a href="../broker-boot-loader/" class="md-nav__link">
         
   
   
@@ -1197,7 +1064,7 @@
   
   
     <li class="md-nav__item">
-      <a href="broker-measurement-profile/" class="md-nav__link">
+      <a href="../broker-measurement-profile/" class="md-nav__link">
         
   
   
@@ -1225,7 +1092,7 @@
   
   
     <li class="md-nav__item">
-      <a href="broker-restricted-firmware/" class="md-nav__link">
+      <a href="../broker-restricted-firmware/" class="md-nav__link">
         
   
   
@@ -1250,10 +1117,37 @@
                 
   
   
+    
   
   
-    <li class="md-nav__item">
-      <a href="partner-hardware-validation/" class="md-nav__link">
+  
+    <li class="md-nav__item md-nav__item--active">
+      
+      <input class="md-nav__toggle md-toggle" type="checkbox" id="__toc">
+      
+      
+        
+      
+      
+        <label class="md-nav__link md-nav__link--active" for="__toc">
+          
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Partner hardware validation
+  
+
+    
+  </span>
+  
+  
+
+          <span class="md-nav__icon md-icon"></span>
+        </label>
+      
+      <a href="./" class="md-nav__link md-nav__link--active">
         
   
   
@@ -1269,6 +1163,70 @@
   
 
       </a>
+      
+        
+
+<nav class="md-nav md-nav--secondary" aria-label="Table of contents">
+  
+  
+  
+    
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      Table of contents
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#what-is-already-tested" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        What is already tested
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#initial-request-to-the-lab-operator" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Initial request to the lab operator
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#next-experiment-after-the-environment-is-confirmed" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Next experiment after the environment is confirmed
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#interpretation" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Interpretation
+      
+    </span>
+  </a>
+  
+</li>
+      
+    </ul>
+  
+</nav>
+      
     </li>
   
 
@@ -1281,7 +1239,7 @@
   
   
     <li class="md-nav__item">
-      <a href="protected-runtime-evidence/" class="md-nav__link">
+      <a href="../protected-runtime-evidence/" class="md-nav__link">
         
   
   
@@ -1396,7 +1354,7 @@
   
   
     <li class="md-nav__item">
-      <a href="roadmap/" class="md-nav__link">
+      <a href="../roadmap/" class="md-nav__link">
         
   
   
@@ -1424,7 +1382,7 @@
   
   
     <li class="md-nav__item">
-      <a href="limitations/" class="md-nav__link">
+      <a href="../limitations/" class="md-nav__link">
         
   
   
@@ -1452,7 +1410,7 @@
   
   
     <li class="md-nav__item">
-      <a href="governance/" class="md-nav__link">
+      <a href="../governance/" class="md-nav__link">
         
   
   
@@ -1480,7 +1438,7 @@
   
   
     <li class="md-nav__item">
-      <a href="sponsors/" class="md-nav__link">
+      <a href="../sponsors/" class="md-nav__link">
         
   
   
@@ -1508,7 +1466,7 @@
   
   
     <li class="md-nav__item">
-      <a href="contributing/" class="md-nav__link">
+      <a href="../contributing/" class="md-nav__link">
         
   
   
@@ -1536,7 +1494,7 @@
   
   
     <li class="md-nav__item">
-      <a href="changelog/" class="md-nav__link">
+      <a href="../changelog/" class="md-nav__link">
         
   
   
@@ -1572,9 +1530,7 @@
             
             
               
-                
-              
-              <div class="md-sidebar md-sidebar--secondary" data-md-component="sidebar" data-md-type="toc" hidden>
+              <div class="md-sidebar md-sidebar--secondary" data-md-component="sidebar" data-md-type="toc" >
                 <div class="md-sidebar__scrollwrap">
                   <div class="md-sidebar__inner">
                     
@@ -1593,10 +1549,10 @@
     <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
       
         <li class="md-nav__item">
-  <a href="#the-trust-direction" class="md-nav__link">
+  <a href="#what-is-already-tested" class="md-nav__link">
     <span class="md-ellipsis">
       
-        The trust direction
+        What is already tested
       
     </span>
   </a>
@@ -1604,10 +1560,10 @@
 </li>
       
         <li class="md-nav__item">
-  <a href="#honest-guarantee-scope" class="md-nav__link">
+  <a href="#initial-request-to-the-lab-operator" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Honest guarantee scope
+        Initial request to the lab operator
       
     </span>
   </a>
@@ -1615,10 +1571,10 @@
 </li>
       
         <li class="md-nav__item">
-  <a href="#what-is-checked-today" class="md-nav__link">
+  <a href="#next-experiment-after-the-environment-is-confirmed" class="md-nav__link">
     <span class="md-ellipsis">
       
-        What is checked today
+        Next experiment after the environment is confirmed
       
     </span>
   </a>
@@ -1626,43 +1582,10 @@
 </li>
       
         <li class="md-nav__item">
-  <a href="#try-it" class="md-nav__link">
+  <a href="#interpretation" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Try it
-      
-    </span>
-  </a>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#where-it-fits" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Where it fits
-      
-    </span>
-  </a>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#where-to-go-next" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Where to go next
-      
-    </span>
-  </a>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#get-involved" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Get involved
+        Interpretation
       
     </span>
   </a>
@@ -1682,200 +1605,166 @@
               
                 
 
+
+
   
 
 
+  <nav class="md-path" aria-label="Navigation" >
+    <ol class="md-path__list">
+      
+        
+  
+  
+    <li class="md-path__item">
+      <a href=".." class="md-path__link">
+        
+  <span class="md-ellipsis">
+    Home
+  </span>
 
+      </a>
+    </li>
   
 
+      
+      
+        
+  
+  
+    
+    
+      <li class="md-path__item">
+        <a href="../reference-kbs/" class="md-path__link">
+          
+  <span class="md-ellipsis">
+    Guides
+  </span>
+
+        </a>
+      </li>
+    
+  
+
+      
+    </ol>
+  </nav>
 
               
               <article class="md-content__inner md-typeset">
                 
                   
-  
-
 
 
   
   
 
 
-<p><a href="https://agentrust-io.com/#chain">01 · Weights: is this the model that was released, and who may release its key?</a></p>
-<h1 id="release-model-weights-only-to-an-attested-runtime">Release model weights only to an attested runtime<a class="headerlink" href="#release-model-weights-only-to-an-attested-runtime" title="Permanent link">&para;</a></h1>
-<p>WCM is an open, pre-1.0 specification that binds encrypted weights to a signed
-release policy, so a key broker releases the decryption key only to a workload
-whose attestation matches the manifest.</p>
-<p><a class="md-button md-button--primary" href="#try-it">Run the 91 conformance vectors</a>
-<a class="md-button" href="limitations/">What this proves, and what it does not</a></p>
-<div class="admonition tip">
-<p class="admonition-title">TL;DR</p>
-<p>The reference SDK (<a href="https://pypi.org/project/weight-custody-manifest/">weight-custody-manifest</a>
-0.28.2, Apache-2.0) runs its conformance vectors offline with no GPU or cloud
-account, and verifies AMD SEV-SNP, Intel TDX and NVIDIA H100 CC evidence
-captured on real hardware. Against an operator who physically owns the
-machine, WCM offers accountability, not cryptographic custody, because
-published memory-bus attacks defeat current confidential-computing silicon.</p>
-</div>
-<div class="grid cards">
-<ul>
-<li>
-<p><strong>Run it</strong></p>
-<hr />
-<p><code>wcm conformance</code> runs every level offline. The quote vectors use synthetic
-certificate roots.</p>
-<p><a href="#try-it">Try it</a></p>
-</li>
-<li>
-<p><strong>What it proves, and what it does not</strong></p>
-<hr />
-<p>What an operator who owns the hardware can still do, and why a valid
-signature cannot tell an authorized key from an extracted one.</p>
-<p><a href="limitations/">Limitations</a></p>
-</li>
-<li>
-<p><strong>Hardware evidence</strong></p>
-<hr />
-<p>AMD SEV-SNP (Azure), Intel TDX (GCP) and NVIDIA H100 CC, each with a
-committed fixture that verifies offline. H100 landed in
-<a href="https://github.com/agentrust-io/weight-custody-manifest/pull/54">#54</a>.</p>
-<p><a href="roadmap/">Roadmap</a></p>
-</li>
-<li>
-<p><strong>The chain</strong></p>
-<hr />
-<p>Next: <a href="https://manifest.agentrust-io.com">Agent Manifest</a> records the agent
-that loads the weights. Check a real TDX quote yourself at
-<a href="https://agentrust-io.com/verify/">agentrust-io.com/verify</a>.</p>
-<p><a href="https://agentrust-io.com/#chain">See the chain</a></p>
-</li>
-</ul>
-</div>
-<div class="admonition warning">
-<p class="admonition-title">Pre-1.0, design under review</p>
-<p>This is a design under review, not a production standard. Do not rely on it
-for production.</p>
-</div>
-<h2 id="the-trust-direction">The trust direction<a class="headerlink" href="#the-trust-direction" title="Permanent link">&para;</a></h2>
-<p>When a frontier model is deployed into a customer's own infrastructure (on-prem,
-sovereign cloud, air-gapped), the party at risk flips: it is now the <strong>model
-builder</strong> whose weights are exposed to the customer's hardware and operators. WCM
-is the protocol for that direction: a signed manifest describing which weights
-are released and under what terms, attestation-gated key release into a verified
-enclave, wipe-on-lapse and revocation, and a chain of custody for derivatives.</p>
-<p>WCM answers one question: can a model builder release encrypted weights only to
-an approved workload, keep that approval short-lived, and retain evidence of what
-happened? The answer is yes for the reference protocol and its software checks,
-with one boundary stated plainly rather than buried, in the next section.</p>
-<p>WCM composes with <a href="oms-interoperability/">OpenSSF Model Signing</a> rather than
-competing with it: OMS proves which model artifact a signer published; WCM
-governs whether the key for those exact bytes may be released to a freshly
-attested workload and how long that workload may retain it.</p>
-<h2 id="honest-guarantee-scope">Honest guarantee scope<a class="headerlink" href="#honest-guarantee-scope" title="Permanent link">&para;</a></h2>
-<p>WCM names two guarantees and never blends them:</p>
-<ul>
-<li><strong>Cryptographic custody</strong> against software and remote adversaries.</li>
-<li><strong>Accountability-grade</strong> protection against an operator who physically owns the
-  hardware, <em>not</em> cryptographic custody. Cheap published memory-bus attacks
-  (<a href="https://tee.fail/">TEE.fail</a>, <a href="https://badram.eu/">BadRAM</a>) defeat current
-  confidential-computing silicon; there WCM offers cost, detection, containment,
-  legal recourse, and a mandatory physical-hardening tier.</li>
-</ul>
-<p>See <a href="limitations/">Limitations</a> and the specification's §3.6.</p>
+<h1 id="partner-hardware-validation-first-execution-packet">Partner hardware validation: first execution packet<a class="headerlink" href="#partner-hardware-validation-first-execution-packet" title="Permanent link">&para;</a></h1>
+<p>This packet starts the controlled-host work tracked in #149. It checks whether
+an operator can support the provisional Linux/QEMU native-SNP launch profile.
+It does not launch a VM or establish hardware-backed application identity.</p>
+<h2 id="what-is-already-tested">What is already tested<a class="headerlink" href="#what-is-already-tested" title="Permanent link">&para;</a></h2>
+<p>The restricted firmware candidate has software boot controls and offline
+measurement prediction with seven launch-input substitutions. Separate Azure and
+GCP captures exercised real attestation verification, but neither launched this
+firmware or established the identity of the running broker application.</p>
+<p>The composed software development harness in PR #150 joins provisioning,
+diagnostic model computation, agent mediation, peer authentication and disclosure.
+Its 36-case hosted result uses synthetic attestation and trusts the host. That
+result is a separate source snapshot, not a hardware acceptance result for this
+branch. The affine model executes before its output reaches the confined agent.</p>
+<h2 id="initial-request-to-the-lab-operator">Initial request to the lab operator<a class="headerlink" href="#initial-request-to-the-lab-operator" title="Permanent link">&para;</a></h2>
+<p>Confirm permission to select guest firmware, kernel, initramfs/application image
+and QEMU launch parameters on an AMD SEV-SNP host. CPU-only capacity is enough.
+Host administrators can run this packet themselves; external administrative access
+is not required. Agree on the access window, any spending limit and cleanup owner
+before launch. A managed service with another boot chain needs its own validated
+adapter; failure of this particular preflight is not a verdict on that service.</p>
+<p>From an authorized checkout of the reviewed WCM source, with Python 3.11 or later:</p>
+<div class="highlight"><pre><span></span><code>git<span class="w"> </span>rev-parse<span class="w"> </span>HEAD
+python3<span class="w"> </span>python/boot/host_preflight.py<span class="w"> </span>&gt;<span class="w"> </span>host-preflight.json
+</code></pre></div>
+<p>The second command returns 0 only when all named prerequisites were observed,
+or 2 when something is absent or unavailable. Keep the JSON even with exit 2.
+Use <code>--qemu /operator/approved/qemu-system-x86_64</code> if the trusted executable is
+outside PATH. The script invokes only QEMU property help, with a ten-second
+timeout. It reads device metadata, access permissions and the KVM SNP module
+parameter. It does not open devices, issue ioctls, contact a network, install
+packages, change configuration or start a guest.</p>
 <table>
 <thead>
 <tr>
-<th>Against</th>
-<th>What you get</th>
+<th>Observation</th>
+<th>Why it matters</th>
 </tr>
 </thead>
 <tbody>
 <tr>
-<td><strong>Local software demo</strong></td>
-<td>Checks the reference protocol in an ordinary process. The operator can inspect its memory. Mock attestation provides no hardware-rooted confidentiality.</td>
+<td>Linux x86-64</td>
+<td>The current adapter targets this host platform.</td>
 </tr>
 <tr>
-<td><strong>Protected runtime</strong></td>
-<td>Requires verified platform evidence, trusted keys, channel binding, workload isolation, and enforced renewal. Platform configuration, firmware, side channels, and the serving application's export paths affect the result.</td>
+<td><code>/dev/sev</code> and <code>/dev/kvm</code> character devices, readable/writable by the invoking account</td>
+<td>Host launch interfaces are required. <code>/dev/sev-guest</code> alone is insufficient. Permission checks do not exercise the interfaces.</td>
 </tr>
 <tr>
-<td><strong>Physical hardware owner</strong></td>
-<td>Do not assume weight extraction is impossible. Published physical attacks motivate additional hardening and operator assumptions. A valid signature alone cannot distinguish an authorized key from an extracted one.</td>
+<td><code>/sys/module/kvm_amd/parameters/sev_snp</code> enabled</td>
+<td>The local kernel reports SNP host support enabled. Missing or unreadable is unavailable.</td>
+</tr>
+<tr>
+<td>QEMU exposes <code>sev-snp-guest</code> and its <code>kernel-hashes</code> property</td>
+<td>The selected QEMU binary advertises the required launch interface. Help output does not prove a working launch.</td>
 </tr>
 </tbody>
 </table>
-<p>The <a href="https://www.rand.org/pubs/research_reports/RRA2849-1.html">RAND weight-security report</a>
-provides threat-model context; it is not a certification of WCM. Passing the
-reference suite does not assign a deployment an attacker-resistance tier.</p>
-<h2 id="what-is-checked-today">What is checked today<a class="headerlink" href="#what-is-checked-today" title="Permanent link">&para;</a></h2>
-<p>The reference implementation ships <strong>91 portable conformance vectors</strong>: 32 at L1,
-37 at L2, 12 at L3, and 10 at L4. Run them yourself with <code>wcm conformance</code>.</p>
-<p>This is the reference implementation's self-test, not independent certification
-and not a hardware deployment test. CPU quote vectors use synthetic certificate
-roots, GPU cryptographic verification is not covered by them, and the runner
-prints its uncovered cases. See <a href="conformance/">Schema and conformance</a>.</p>
-<h2 id="try-it">Try it<a class="headerlink" href="#try-it" title="Permanent link">&para;</a></h2>
-<p>Python 3.11+ and Git. No cloud account, GPU, model download, or API key. Keep WCM
-in its own environment, because other AgenTrust packages may require a different
-<code>cryptography</code> version.</p>
-<div class="highlight"><pre><span></span><code>python<span class="w"> </span>-m<span class="w"> </span>venv<span class="w"> </span>.venv-wcm
-<span class="c1"># bash: source .venv-wcm/bin/activate</span>
-<span class="c1"># PowerShell: .venv-wcm\Scripts\Activate.ps1</span>
-python<span class="w"> </span>-m<span class="w"> </span>pip<span class="w"> </span>install<span class="w"> </span>weight-custody-manifest
-wcm<span class="w"> </span>conformance
-</code></pre></div>
-<p>Then run the closed-weight allow/deny example, which supplies an approved serving
-measurement and then changes it:</p>
-<div class="highlight"><pre><span></span><code>git<span class="w"> </span>clone<span class="w"> </span>https://github.com/agentrust-io/demos
-<span class="nb">cd</span><span class="w"> </span>demos
-python<span class="w"> </span>demo-07-closed-weight/run.py
-</code></pre></div>
-<p>Expected: joint signature <code>True</code>, approved release <code>True</code>, then unapproved release
-<code>False</code>, because the measurement is not in <code>accepted_measurements</code>. Both cases use
-synthetic attestation and a placeholder key; labels such as "enclave" in the output
-do not mean hardware was used. <a href="getting-started/">Getting started</a> covers the SDK
-in full.</p>
-<h2 id="where-it-fits">Where it fits<a class="headerlink" href="#where-it-fits" title="Permanent link">&para;</a></h2>
-<ul>
-<li><strong>Sovereign deployment.</strong> Run a closed model inside nationally controlled
-  infrastructure while making weight release conditional on an approved, attested
-  workload.</li>
-<li><strong>Enterprise and air-gapped.</strong> Deliver encrypted weights to customer-operated
-  environments without turning a one-time handoff into permanent authorization.</li>
-<li><strong>Regulated model delivery.</strong> Carry signed policy, release decisions, renewal
-  state, revocation, and derivative lineage as portable evidence.</li>
-</ul>
-<h2 id="where-to-go-next">Where to go next<a class="headerlink" href="#where-to-go-next" title="Permanent link">&para;</a></h2>
-<ul>
-<li><a href="tutorials/how-it-works/">How WCM works</a>, the six steps end to end</li>
-<li><a href="spec-overview/">Specification overview</a> and the full <a href="https://github.com/agentrust-io/weight-custody-manifest/blob/main/SPEC.md"><code>SPEC.md</code></a></li>
-<li><a href="threat-model/">Threat model</a> and <a href="limitations/">Limitations</a></li>
-<li><a href="getting-started/">Getting started with the SDK</a> and the <a href="reference-kbs/">reference KBS image</a></li>
-<li><a href="oms-interoperability/">OpenSSF Model Signing interoperability</a></li>
-<li><a href="roadmap/">Roadmap</a> · <a href="governance/">Governance</a> · <a href="contributing/">Contributing</a></li>
-</ul>
-<h2 id="get-involved">Get involved<a class="headerlink" href="#get-involved" title="Permanent link">&para;</a></h2>
-<p>WCM is pre-1.0 and the review is open. Four routes in:</p>
-<ul>
-<li><strong>Model owners.</strong> Pressure-test the release policy against your actual threat model.</li>
-<li><strong>Runtime and cloud teams.</strong> Add or review an attestation profile and prove what
-  your protected boundary can support. Start with
-  <a href="https://github.com/agentrust-io/weight-custody-manifest/blob/main/CONTRIBUTING.md">CONTRIBUTING.md</a>.</li>
-<li><strong>Security researchers.</strong> Challenge the threat model, fixtures, hardware
-  assumptions, and explicit non-goals. Reporting process in
-  <a href="https://github.com/agentrust-io/weight-custody-manifest/blob/main/SECURITY.md">SECURITY.md</a>.</li>
-<li><strong>Standards contributors.</strong> Review the manifest, portable evidence, conformance
-  levels, and interoperability boundaries.</li>
-</ul>
-<p>Open an issue or a discussion on
-<a href="https://github.com/agentrust-io/weight-custody-manifest">github.com/agentrust-io/weight-custody-manifest</a>.</p>
-<p>The specification, schema, conformance suite, reference SDK, threat model, and
-reference key-release service are available under Apache-2.0. Vendors may build
-interoperable hosted services and protected-runtime implementations. Public
-availability does not establish production readiness.</p>
-<p><strong>Status:</strong> pre-1.0 · SDK 0.28.2 · Apache-2.0 · SCITT and CoSAI standards path on
-the <a href="roadmap/">roadmap</a> · Sponsored by OPAQUE, which funds the engineering,
-infrastructure and confidential-computing work behind these projects.</p>
+<p>Return the JSON, the WCM commit identifier, whether custom launch artifacts are
+permitted, and who can perform the launch. The JSON omits hostnames, IP addresses,
+account names, raw command output and hardware identifiers. Review it before
+sharing. Raw attestation reports and certificate bundles belong in the agreed
+private evidence channel, not a public issue or blog.</p>
+<h2 id="next-experiment-after-the-environment-is-confirmed">Next experiment after the environment is confirmed<a class="headerlink" href="#next-experiment-after-the-environment-is-confirmed" title="Permanent link">&para;</a></h2>
+<ol>
+<li>Freeze the firmware, kernel, initramfs, command-line bytes, vCPU model/count,
+   guest features, QEMU build and platform policy. Use the production candidate,
+   never the instrumented TCG firmware. The existing
+   <a href="../broker-measurement-profile/">build and prediction instructions</a> record the
+   source pins and input format; <a href="../broker-restricted-firmware/">firmware controls</a>
+   describe the remaining firmware-review limits.</li>
+<li>On the owner build machine, predict and approve the expected measurement
+   before collecting the guest report. Independently supply the accepted AMD
+   roots and platform policy. A value copied from the first report is not an
+   independent prediction. The CI example parameters are not deployment approval.</li>
+<li>On the agreed host, launch exactly those artifacts, obtain a fresh report
+   bound to the provisioning receiver key and owner challenge, and verify the
+   signature, trust chain, security state, measurement and binding on the owner
+   side. Resolve predictor/launch disagreement before releasing model keys.</li>
+<li>Repeat with substituted launch inputs against the unchanged original
+   approval. Observe key release, receipt and installation separately. Distinguish
+   a firmware refusal from owner-side appraisal refusal; neither may silently
+   fall back to a different image or software evidence.</li>
+<li>Only after identity validation, test protected model-key handling,
+   decryption/load/computation and lifecycle controls. Termination does not
+   establish secure erasure. Independently operated peers and GPU transport
+   remain separate milestones.</li>
+<li>Retain source/artifact identities, exact commands, policy, evidence class and
+   boundary observations. Stop/remove experimental guests and agree which private
+   evidence must be retained. Record cleanup observations and unavailable checks.</li>
+</ol>
+<p>The actual launch command must be reviewed against the confirmed host and agreed
+security policy; this packet intentionally does not invent host-specific values.
+A partner-run result has a separate operator but still requires appraisal under
+independently controlled owner policy. It does not itself establish adversarial
+independence or complete confidential execution.</p>
+<h2 id="interpretation">Interpretation<a class="headerlink" href="#interpretation" title="Permanent link">&para;</a></h2>
+<p><code>prerequisites-observed</code> means only that the local observations above succeeded.
+The host can fabricate them. The report always says <code>hardware_acceptance:
+not-tested</code>; it is not attestation, deployment approval or a custody certificate.
+Missing permissions, an unfamiliar help format, missing module state and tool
+failure all require review rather than a success inference.</p>
+<p>References: <a href="https://www.qemu.org/docs/master/system/i386/amd-memory-encryption.html">QEMU AMD memory encryption</a>,
+<a href="https://docs.kernel.org/virt/kvm/x86/amd-memory-encryption.html">Linux host SEV interfaces</a>,
+and <a href="https://docs.kernel.org/virt/coco/sev-guest.html">Linux guest report interface</a>.</p>
 
 
 
@@ -1888,8 +1777,6 @@ infrastructure and confidential-computing work behind these projects.</p>
 
 
 
-
-  
 
 
 
@@ -1951,10 +1838,10 @@ infrastructure and confidential-computing work behind these projects.</p>
     
       
       
-      <script id="__config" type="application/json">{"annotate": null, "base": ".", "features": ["navigation.instant", "navigation.tracking", "navigation.tabs", "navigation.tabs.sticky", "navigation.sections", "navigation.top", "navigation.path", "search.suggest", "search.highlight", "content.code.copy", "content.tabs.link", "toc.follow"], "search": "assets/javascripts/workers/search.2c215733.min.js", "tags": null, "translations": {"clipboard.copied": "Copied to clipboard", "clipboard.copy": "Copy to clipboard", "search.result.more.one": "1 more on this page", "search.result.more.other": "# more on this page", "search.result.none": "No matching documents", "search.result.one": "1 matching document", "search.result.other": "# matching documents", "search.result.placeholder": "Type to start searching", "search.result.term.missing": "Missing", "select.version": "Select version"}, "version": null}</script>
+      <script id="__config" type="application/json">{"annotate": null, "base": "..", "features": ["navigation.instant", "navigation.tracking", "navigation.tabs", "navigation.tabs.sticky", "navigation.sections", "navigation.top", "navigation.path", "search.suggest", "search.highlight", "content.code.copy", "content.tabs.link", "toc.follow"], "search": "../assets/javascripts/workers/search.2c215733.min.js", "tags": null, "translations": {"clipboard.copied": "Copied to clipboard", "clipboard.copy": "Copy to clipboard", "search.result.more.one": "1 more on this page", "search.result.more.other": "# more on this page", "search.result.none": "No matching documents", "search.result.one": "1 matching document", "search.result.other": "# matching documents", "search.result.placeholder": "Type to start searching", "search.result.term.missing": "Missing", "select.version": "Select version"}, "version": null}</script>
     
     
-      <script src="assets/javascripts/bundle.d7400e89.min.js"></script>
+      <script src="../assets/javascripts/bundle.d7400e89.min.js"></script>
       
         <script src="https://agentrust-io.com/supernav.js?v=22"></script>
       

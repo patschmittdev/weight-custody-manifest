@@ -16,7 +16,7 @@
         <link rel="prev" href="../conformance/">
       
       
-        <link rel="next" href="../protected-runtime-evidence/">
+        <link rel="next" href="../provisioned-broker-service/">
       
       
         
@@ -993,6 +993,230 @@
   
   
     <li class="md-nav__item">
+      <a href="../provisioned-broker-service/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Provisioned receiver service
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../owner-provisioning-client/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Owner provisioning client
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../provisioning-lifecycle/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Provisioning lifecycle
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../broker-deployment-identity/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Broker deployment identity
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../broker-boot-loader/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Provisional boot loader
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../broker-measurement-profile/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Provisional measurement profile
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../broker-restricted-firmware/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Restricted firmware candidate
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../partner-hardware-validation/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Partner hardware validation
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
       <a href="../protected-runtime-evidence/" class="md-nav__link">
         
   
@@ -1410,9 +1634,11 @@ provisioning model keys.</p>
 docker<span class="w"> </span>run<span class="w"> </span>--rm<span class="w"> </span>-p<span class="w"> </span><span class="m">8080</span>:8080<span class="w"> </span><span class="se">\</span>
 <span class="w">  </span>-v<span class="w"> </span><span class="s2">"</span><span class="nv">$PWD</span><span class="s2">/keystore.json:/run/secrets/keystore.json:ro"</span><span class="w"> </span><span class="se">\</span>
 <span class="w">  </span>-v<span class="w"> </span><span class="s2">"</span><span class="nv">$PWD</span><span class="s2">/cpu-root.pem:/run/trust/cpu-root.pem:ro"</span><span class="w"> </span><span class="se">\</span>
+<span class="w">  </span>-v<span class="w"> </span><span class="s2">"</span><span class="nv">$PWD</span><span class="s2">/gpu-root.pem:/run/trust/gpu-root.pem:ro"</span><span class="w"> </span><span class="se">\</span>
 <span class="w">  </span>-v<span class="w"> </span><span class="s2">"</span><span class="nv">$PWD</span><span class="s2">/manifest-identities.json:/run/trust/manifest-identities.json:ro"</span><span class="w"> </span><span class="se">\</span>
 <span class="w">  </span>-e<span class="w"> </span><span class="nv">WCM_KEYSTORE_FILE</span><span class="o">=</span>/run/secrets/keystore.json<span class="w"> </span><span class="se">\</span>
 <span class="w">  </span>-e<span class="w"> </span><span class="nv">WCM_CPU_TRUST_ROOT_FILE</span><span class="o">=</span>/run/trust/cpu-root.pem<span class="w"> </span><span class="se">\</span>
+<span class="w">  </span>-e<span class="w"> </span><span class="nv">WCM_GPU_TRUST_ROOT_FILE</span><span class="o">=</span>/run/trust/gpu-root.pem<span class="w"> </span><span class="se">\</span>
 <span class="w">  </span>-e<span class="w"> </span><span class="nv">WCM_TRUSTED_MANIFEST_IDENTITIES_FILE</span><span class="o">=</span>/run/trust/manifest-identities.json<span class="w"> </span>wcm-kbs
 </code></pre></div>
 <p>Keys are supplied at runtime, never baked into the image. CI builds, runs, and
@@ -1438,6 +1664,12 @@ The server also fails closed unless the submitted manifest is authorized.
 <code>WCM_TRUSTED_MANIFEST_IDENTITIES_FILE</code> must contain a JSON array of exact
 <code>sha256:</code> manifest identities produced by <code>wcm.manifest_identity</code>. The manifest
 embedded in a release request is never accepted as its own trust anchor.</p>
+<p>GPU evidence also requires a cryptographic verifier. Set
+<code>WCM_GPU_TRUST_ROOT_FILE</code> to the reviewed NVIDIA device identity root PEM.
+Without that root, any request containing GPU evidence is denied. A
+CPU-only manifest without GPU evidence remains supported. This verifies
+the GPU report's certificate chain, signature and challenge nonce; it does
+not establish a protected CPU-to-GPU transfer path or verify RIM claims.</p>
 </div>
 
 
@@ -1482,6 +1714,19 @@ embedded in a release request is never accepted as its own trust anchor.</p>
     Made with
     <a href="https://squidfunk.github.io/mkdocs-material/" target="_blank" rel="noopener">
       Material for MkDocs
+    </a>
+  
+</div>
+      
+        
+<div class="md-social">
+  
+    
+    
+    
+    
+    <a href="https://www.linkedin.com/company/agentrust-io/" target="_blank" rel="noopener" title="AgenTrust on LinkedIn" class="md-social__link">
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 448 512"><!--! Font Awesome Free 7.1.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2025 Fonticons, Inc.--><path d="M416 32H31.9C14.3 32 0 46.5 0 64.3v383.4C0 465.5 14.3 480 31.9 480H416c17.6 0 32-14.5 32-32.3V64.3c0-17.8-14.4-32.3-32-32.3M135.4 416H69V202.2h66.5V416zM102.2 96a38.5 38.5 0 1 1 0 77 38.5 38.5 0 1 1 0-77m282.1 320h-66.4V312c0-24.8-.5-56.7-34.5-56.7-34.6 0-39.9 27-39.9 54.9V416h-66.4V202.2h63.7v29.2h.9c8.9-16.8 30.6-34.5 62.9-34.5 67.2 0 79.7 44.3 79.7 101.9z"/></svg>
     </a>
   
 </div>
