@@ -325,9 +325,12 @@ def verify_tdx_quote(
     ``expected_nonce=None`` skips the only freshness check this function has,
     so the result then says nothing about when the quote was produced and a
     captured quote replays. On the Azure vTPM path REPORT_DATA is bound by the
-    paravisor to the HCL runtime data, not to a caller nonce, and
-    ``AzureTdxVtpmProvider`` does not capture a nonce-bound vTPM quote alongside
-    it, so no WCM verifier can establish freshness for that evidence today.
+    paravisor to the HCL runtime data, not to a caller nonce, so this function
+    establishes no freshness for that evidence. Opting in with
+    ``AzureTdxVtpmProvider(vtpm_bundle=True)`` packs a nonce-bound vTPM PCR 23
+    quote beside the DCAP quote, and the PROVISIONAL
+    ``wcm.azure_vtpm.AzureTdxVtpmVerifier`` checks the two together against the
+    operator's ``paravisor_measurements``.
     Bare-metal / configfs-tsm guests do control REPORT_DATA; pass the nonce there.
 
     ``channel_binding`` is the enclave's attested transport public key (raw
