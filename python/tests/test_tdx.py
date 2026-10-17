@@ -87,11 +87,14 @@ def build_quote(
     qe_attributes=b"\x15" + bytes(15),
     qe_report_data_tail=bytes(32),
     qe_auth_size=None,
+    td_body=None,
 ):
     """Assemble a valid synthetic TDX DCAP v4 quote and its trust root.
 
     The QE report carries Intel's TD QE identity by default; the keyword
     arguments let a test present an enclave that is not Intel's QE.
+    ``td_body``, when given, is the 584-byte TD report body used verbatim in
+    place of the one built from ``nonce_hex`` and ``mrtd``.
     """
     root_k = _p256()
     root = _cert("Intel SGX Root CA (synthetic)", "Intel SGX Root CA (synthetic)", root_k, root_k, ca=True)
@@ -109,6 +112,9 @@ def build_quote(
     td = bytearray(584)
     td[136:136 + 48] = mrtd
     td[520:520 + 32] = hashlib.sha256(bytes.fromhex(nonce_hex)).digest()
+    if td_body is not None:
+        assert len(td_body) == 584
+        td = bytearray(td_body)
 
     signed_body = bytes(header) + bytes(td)
     quote_sig = _raw_sig(att_k, signed_body)

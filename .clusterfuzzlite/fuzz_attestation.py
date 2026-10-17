@@ -4,7 +4,7 @@
 A key broker hands each of these attacker-supplied bytes before it has decided
 to trust anything about them: a TDX quote with nested declared lengths, an SNP
 report and its Azure HCL wrapper, an NVIDIA GPU report, and the base64 JSON
-bundles the CPU and GPU verifiers take.
+bundles the CPU and GPU verifiers take (Azure SEV-SNP and TDX vTPM included).
 
 The property is that each one fails closed. A parser returns or raises the
 error type its module declares; a verifier returns a ``QuoteVerification``
@@ -24,7 +24,13 @@ with atheris.instrument_imports():
     from cryptography.x509.oid import NameOID
     import datetime
 
-    from wcm import AzureSnpVtpmVerifier, JsonQuoteParser, QuoteVerifier, TrustStore
+    from wcm import (
+        AzureSnpVtpmVerifier,
+        AzureTdxVtpmVerifier,
+        JsonQuoteParser,
+        QuoteVerifier,
+        TrustStore,
+    )
     from wcm._quote_verify import QuoteFormatError
     from wcm.nvidia import GpuReportFormatError, NvidiaGpuVerifier, parse_gpu_report
     from wcm.snp import extract_snp_report_from_hcl, parse_snp_report
@@ -69,6 +75,9 @@ def _verifiers(blob: bytes) -> None:
     results = [
         verify_tdx_quote(blob, _TRUST, expected_nonce=_NONCE),
         AzureSnpVtpmVerifier(_TRUST, paravisor_measurements=_PARAVISOR).verify(
+            text, expected_nonce=_NONCE, expected_workload_measurement=_MEASUREMENT
+        ),
+        AzureTdxVtpmVerifier(_TRUST, paravisor_measurements=_PARAVISOR).verify(
             text, expected_nonce=_NONCE, expected_workload_measurement=_MEASUREMENT
         ),
         QuoteVerifier(JsonQuoteParser(), _TRUST).verify(text, expected_nonce=_NONCE),
