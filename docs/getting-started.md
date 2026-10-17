@@ -22,8 +22,9 @@ pip install --no-deps -e .
 
 Both Azure providers (`AzureSnpVtpmProvider`, `AzureTdxVtpmProvider`) read the
 HCL report from the vTPM with `tpm2_nvread` from `tpm2-tools`, and need
-`/dev/tpmrm0`. The SNP provider's measured-launch quote also runs
-`tpm2_pcrreset`, `tpm2_pcrextend`, `tpm2_readpublic` and `tpm2_quote`:
+`/dev/tpmrm0`. The SNP provider's measured-launch quote, and the TDX provider's
+when constructed with `vtpm_bundle=True`, also run `tpm2_pcrreset`,
+`tpm2_pcrextend`, `tpm2_readpublic` and `tpm2_quote`:
 
 ```bash
 sudo apt-get install -y tpm2-tools
