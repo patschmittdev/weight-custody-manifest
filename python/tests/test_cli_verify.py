@@ -232,6 +232,125 @@ def test_vq_missing_root_file_reports_one_line_error(capsys, tmp_path):
     assert "Traceback" not in output.err
 
 
+def _azure_vtpm_bundle(
+    tmp_path: pathlib.Path, *, kind: str, dcap_b64: str, outer: dict | None = None
+) -> str:
+    """Wrap a DCAP quote in a wcm-azure-tdx-vtpm/v1 bundle on disk."""
+    import base64
+
+    inner = {
+        "kind": kind,
+        "tdx_quote_b64": dcap_b64,
+        # Placeholders: this verb checks the DCAP half only.
+        "hcl_b64": base64.b64encode(b"HCLA-placeholder").decode(),
+        "ak_pem": "-----BEGIN PUBLIC KEY-----placeholder-----END PUBLIC KEY-----",
+        "tpm_quote_b64": base64.b64encode(b"placeholder").decode(),
+        "tpm_signature_b64": base64.b64encode(b"placeholder").decode(),
+    }
+    doc = {"quote_b64": base64.b64encode(json.dumps(inner).encode()).decode()}
+    doc.update(outer or {})
+    out = tmp_path / "azure-tdx-vtpm.json"
+    out.write_text(json.dumps(doc), encoding="utf-8")
+    return str(out)
+
+
+def _azure_dcap_b64() -> str:
+    return json.loads((FIXTURES / "tdx_quote_azure.json").read_text(encoding="utf-8"))["quote_b64"]
+
+
+def test_vq_tdx_azure_vtpm_bundle_gets_no_verdict_without_dcap_only(capsys, tmp_path):
+    # Only the DCAP half can be checked here, so a bundle never earns an
+    # overall success verdict by default.
+    path = _azure_vtpm_bundle(tmp_path, kind="wcm-azure-tdx-vtpm/v1", dcap_b64=_azure_dcap_b64())
+    assert main(["verify-quote", "--kind", "tdx", path]) == 1
+    out = capsys.readouterr().out
+    assert "verified  : False" in out
+    assert "gives no verdict on the bundle" in out and "--dcap-only" in out
+    assert "scope" not in out
+
+
+def test_vq_tdx_azure_vtpm_bundle_dcap_only_is_scoped(capsys, tmp_path):
+    path = _azure_vtpm_bundle(tmp_path, kind="wcm-azure-tdx-vtpm/v1", dcap_b64=_azure_dcap_b64())
+    assert main(["verify-quote", "--kind", "tdx", path, "--dcap-only"]) == 0
+    out = capsys.readouterr().out
+    assert "scope     : dcap-only" in out
+    assert "verified  : True" in out
+    assert "inner DCAP quote only" in out and "not checked" in out
+
+
+def test_vq_tdx_azure_vtpm_bundle_with_leading_whitespace_is_recognised(capsys, tmp_path):
+    import base64
+
+    path = _azure_vtpm_bundle(tmp_path, kind="wcm-azure-tdx-vtpm/v1", dcap_b64=_azure_dcap_b64())
+    doc = json.loads(pathlib.Path(path).read_text(encoding="utf-8"))
+    doc["quote_b64"] = base64.b64encode(b" \n\t" + base64.b64decode(doc["quote_b64"])).decode()
+    pathlib.Path(path).write_text(json.dumps(doc), encoding="utf-8")
+    assert main(["verify-quote", "--kind", "tdx", path, "--dcap-only"]) == 0
+    out = capsys.readouterr().out
+    assert "scope     : dcap-only" in out and "verified  : True" in out
+
+
+def test_vq_tdx_raw_quote_with_dcap_only_is_scoped_the_same(capsys):
+    rc = main(["verify-quote", "--kind", "tdx", str(FIXTURES / "tdx_quote_gcp.json"), "--dcap-only"])
+    assert rc == 0
+    out = capsys.readouterr().out
+    assert "scope     : dcap-only" in out and "verified  : True" in out
+
+
+def test_vq_dcap_only_is_refused_for_other_kinds(capsys):
+    rc = main(["verify-quote", "--kind", "gpu", str(FIXTURES / "gpu_h100_attestation.json"), "--dcap-only"])
+    assert rc == 2
+    assert "--dcap-only applies only to --kind tdx" in capsys.readouterr().err
+
+
+def test_vq_tdx_azure_vtpm_bundle_cannot_supply_its_own_root_pin(capsys, tmp_path):
+    import base64
+    import hashlib
+    import sys
+
+    sys.path.insert(0, str(pathlib.Path(__file__).parent))
+    from test_tdx import build_quote
+
+    quote, root = build_quote()
+    fingerprint = hashlib.sha256(root.public_bytes(serialization.Encoding.DER)).hexdigest()
+    path = _azure_vtpm_bundle(
+        tmp_path,
+        kind="wcm-azure-tdx-vtpm/v1",
+        dcap_b64=base64.b64encode(quote).decode(),
+        outer={"intel_sgx_root_ca_sha256": fingerprint},
+    )
+    assert main(["verify-quote", "--kind", "tdx", path, "--dcap-only"]) == 1
+    out = capsys.readouterr().out
+    assert "verified  : False" in out and "pinned Intel SGX root" in out
+
+
+def test_vq_tdx_rejects_unknown_bundle_kind(capsys, tmp_path):
+    path = _azure_vtpm_bundle(tmp_path, kind="wcm-azure-snp-vtpm/v1", dcap_b64=_azure_dcap_b64())
+    assert main(["verify-quote", "--kind", "tdx", path]) == 1
+    assert "unexpected Azure TDX vTPM bundle kind" in capsys.readouterr().out
+
+
+def test_vq_tdx_malformed_azure_vtpm_bundle_is_a_denial(capsys, tmp_path):
+    import base64
+
+    path = tmp_path / "broken.json"
+    path.write_text(json.dumps({"quote_b64": base64.b64encode(b"{not json").decode()}))
+    assert main(["verify-quote", "--kind", "tdx", str(path)]) == 1
+    out = capsys.readouterr().out
+    assert "verified  : False" in out and "invalid Azure vTPM evidence" in out
+
+
+def test_vq_tdx_azure_vtpm_bundle_with_garbage_dcap_quote_is_a_denial(capsys, tmp_path):
+    import base64
+
+    path = _azure_vtpm_bundle(
+        tmp_path, kind="wcm-azure-tdx-vtpm/v1", dcap_b64=base64.b64encode(b"\0" * 3).decode()
+    )
+    assert main(["verify-quote", "--kind", "tdx", path]) == 1
+    out = capsys.readouterr().out
+    assert "verified  : False" in out and "TDX quote too short" in out
+
+
 # -- verify-quote: GPU ---------------------------------------------------------
 
 

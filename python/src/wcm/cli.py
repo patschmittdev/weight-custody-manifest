@@ -8,7 +8,11 @@ Verbs:
   wcm gate MANIFEST [--platform P] [--serving-image H] [--gpu-measurement RIM]
            [--memory-fingerprint]          Diagnose a release policy (MOCK attest).
   wcm verify-quote --kind {snp,tdx,gpu} QUOTE [--nonce HEX] [--root PEM]
-                                           Verify a captured attestation quote.
+                   [--dcap-only]           Verify a captured attestation quote.
+                                           An Azure wcm-azure-tdx-vtpm/v1
+                                           bundle is refused unless
+                                           --dcap-only narrows the check to
+                                           its inner DCAP quote.
   wcm verify-provenance MANIFEST --model DIR --signature SIG --public-key PEM
                                            Cross-verify OpenSSF model-signing.
   wcm conformance [--level L1|L2|L3|L4] [--results FILE] [--list-vectors]
@@ -47,6 +51,7 @@ from ._quote_verify import (
 from ._seal import generate_transport_keypair
 from ._signing import Ed25519Signer, ed25519_from_private_b64url, generate_ed25519
 from ._verify import VerificationContext, verify_manifest
+from .azure_vtpm import unwrap_azure_tdx_vtpm_bundle
 from .kbs import KeyBrokerService
 from .models import MemoryFingerprintChallenge, ServingImageStatus, WeightCustodyManifest
 from .nvidia import build_gpu_verifier
@@ -324,8 +329,12 @@ def _waived_for_diagnostic(m: WeightCustodyManifest) -> WeightCustodyManifest:
     return m.model_copy(update={"release_policy": rp.model_copy(update=update)})
 
 
-def _print_quote_result(kind: str, result: QuoteVerification) -> int:
+def _print_quote_result(
+    kind: str, result: QuoteVerification, scope: Optional[str] = None
+) -> int:
     print(f"kind      : {kind}")
+    if scope is not None:
+        print(f"scope     : {scope}")
     print(f"verified  : {result.verified}")
     if result.leaf_subject:
         print(f"leaf      : {result.leaf_subject}")
@@ -380,6 +389,33 @@ def _verify_snp(bundle: dict[str, Any], args: argparse.Namespace) -> QuoteVerifi
 
 def _verify_tdx(bundle: dict[str, Any], args: argparse.Namespace) -> QuoteVerification:
     quote = base64.b64decode(bundle["quote_b64"])
+    note: Optional[str] = None
+    # JSON may start with whitespace; a raw DCAP quote starts with its version.
+    if quote.lstrip(b" \t\r\n")[:1] == b"{":
+        # An Azure vTPM bundle carries the DCAP quote beside the HCL blob and
+        # the AK-signed PCR 23 quote. This verb can check the DCAP half only,
+        # so it gives no verdict on the bundle unless the caller narrows the
+        # check to that half on purpose: exit 0 keeps meaning "what this file
+        # claims was checked".
+        try:
+            quote = unwrap_azure_tdx_vtpm_bundle(bundle["quote_b64"]).dcap_quote
+            # The inner quote is attacker-supplied like the bundle around it:
+            # a DCAP quote that does not parse is a denial, not a traceback.
+            parse_tdx_quote(quote)
+        except (ValueError, QuoteFormatError) as exc:
+            return QuoteVerification(False, str(exc))
+        if not args.dcap_only:
+            return QuoteVerification(
+                False,
+                "input is a wcm-azure-tdx-vtpm/v1 bundle; this command cannot check its "
+                "vTPM PCR 23 quote, freshness or paravisor measurement, so it gives no verdict "
+                "on the bundle (use AzureTdxVtpmVerifier, or pass --dcap-only to verify the "
+                "inner DCAP quote alone)",
+            )
+        note = (
+            "inner DCAP quote only; vTPM PCR 23 quote, nonce/transport-key freshness and "
+            "paravisor measurement not checked (use AzureTdxVtpmVerifier)"
+        )
     trust = TrustStore()
     if args.root:
         trust.add_root(_load_root_pem(args.root))
@@ -401,7 +437,10 @@ def _verify_tdx(bundle: dict[str, Any], args: argparse.Namespace) -> QuoteVerifi
             )
         trust.add_root(root)
     nonce = args.nonce if args.nonce is not None else bundle.get("expected_nonce")
-    return verify_tdx_quote(quote, trust, expected_nonce=nonce)
+    result = verify_tdx_quote(quote, trust, expected_nonce=nonce)
+    if result.verified and note is not None:
+        return QuoteVerification(True, reason=note, leaf_subject=result.leaf_subject)
+    return result
 
 
 def _verify_gpu(bundle: dict[str, Any], args: argparse.Namespace) -> QuoteVerification:
@@ -431,6 +470,9 @@ def _verify_gpu(bundle: dict[str, Any], args: argparse.Namespace) -> QuoteVerifi
 
 
 def cmd_verify_quote(args: argparse.Namespace) -> int:
+    if args.dcap_only and args.kind != "tdx":
+        print("--dcap-only applies only to --kind tdx", file=sys.stderr)
+        return 2
     bundle = _read_json(args.quote)
     dispatch = {"snp": _verify_snp, "tdx": _verify_tdx, "gpu": _verify_gpu}
     try:
@@ -438,7 +480,9 @@ def cmd_verify_quote(args: argparse.Namespace) -> int:
     except (KeyError, ValueError, TypeError) as exc:
         print(f"kind      : {args.kind}\nverified  : False\nreason    : unparseable bundle: {exc}")
         return 1
-    return _print_quote_result(args.kind, result)
+    return _print_quote_result(
+        args.kind, result, scope="dcap-only" if args.dcap_only else None
+    )
 
 
 def cmd_verify_provenance(args: argparse.Namespace) -> int:
@@ -576,7 +620,17 @@ def build_parser() -> argparse.ArgumentParser:
 
     p_vq = sub.add_parser("verify-quote", help="Verify a captured attestation quote bundle")
     p_vq.add_argument("--kind", required=True, choices=["snp", "tdx", "gpu"], help="Quote type")
-    p_vq.add_argument("quote", help="Path to the quote bundle JSON")
+    p_vq.add_argument(
+        "quote",
+        help="Path to the quote bundle JSON; for --kind tdx its quote_b64 may hold a raw "
+        "DCAP quote or a base64 wcm-azure-tdx-vtpm/v1 bundle (refused without --dcap-only)",
+    )
+    p_vq.add_argument(
+        "--dcap-only",
+        action="store_true",
+        help="--kind tdx: verify only the DCAP quote, including the one inside an Azure "
+        "wcm-azure-tdx-vtpm/v1 bundle; the result is scoped to that quote",
+    )
     p_vq.add_argument("--nonce", default=None, help="Expected challenge nonce (hex); overrides the bundle")
     p_vq.add_argument("--root", default=None, help="Trusted root cert (PEM) to override the pinned/bundled root")
     p_vq.set_defaults(func=cmd_verify_quote)
