@@ -8,6 +8,61 @@ uses semantic-ish versioning while pre-1.0.
 
 - **Fixed (#223).** `azure_vtpm._b64url_uint` now enforces canonical unpadded base64url and RFC 7518 section 2 minimal big-endian `Base64urlUInt` encoding (rejecting leading `0x00` bytes and non-zero trailing base64url bits), and `AzureSnpVtpmVerifier.verify` rejects `HCLAkPub` JWKs carrying RFC 7517/7518 private or symmetric key parameters (`d`, `p`, `q`, `dp`, `dq`, `qi`, `oth`, `k`). `JsonQuoteParser.parse`, `AzureSnpVtpmVerifier.verify`, and `NvidiaGpuVerifier.verify` reject duplicate JSON object keys via `object_pairs_hook`, and `QuoteVerifier.verify`, `verify_tdx_quote`, `AzureSnpVtpmVerifier.verify`, and `NvidiaGpuVerifier.verify` validate `expected_nonce` as 64 lowercase hexadecimal characters before decoding instead of accepting whitespace or raising `ValueError`.
 
+**Added, provisional.** Azure Intel TDX evidence can carry a vTPM quote bound to
+a challenge nonce and a transport key, by constructing
+`AzureTdxVtpmProvider(vtpm_bundle=True)`. The opt-in path resets and extends
+SHA-256 PCR 23 with the serving-image digest and takes a quote over PCR 23
+under the attestation key the HCL names, with
+`sha256(nonce || transport key)` as qualifying data. The default
+`AzureTdxVtpmProvider()` is unchanged: it returns the raw
+DCAP quote, performs no PCR mutation or AK quote, and needs no additional TPM
+tools. That raw quote's REPORT_DATA carries the HCL runtime-data hash rather
+than a nonce, so a captured default-provider quote replays.
+
+The new `AzureTdxVtpmVerifier(trust_store, *, paravisor_measurements)` takes the
+operator's allowlist of TD launch measurements (MRTD), with the same rules as
+`AzureSnpVtpmVerifier`'s `paravisor_measurements`: required, no default, and an
+empty set refused at construction. It checks the DCAP quote, that the HCL agrees
+with it, the MRTD and debug attributes, the `HCLAkPub` attestation key (#173's
+rules), and a TPM quote over exactly SHA-256 PCR 23 that binds the nonce and
+transport key. `QuoteVerification.snp_report` stays `None`, so
+`platform_integrity` remains SEV-SNP-only.
+
+A pass means an Intel-attested TD whose launch measurement is on the operator's
+allowlist; the HCL's claim about the attestation key is that image's. MRTD
+identifies the launched image, not the host or operator, so the allowlist is one
+the operator maintains. As on the SEV-SNP path, PCR 23 binds the digest the
+guest supplied, not the code that runs. TDX has no VMPL. In the public OpenHCL
+and Intel TDX-module sources, guest software can make the paravisor issue a
+report and supply its 64-byte user-data, but cannot request one directly or
+choose the attestation key it names; those sources are not tied to the observed
+MRTDs, so the allowlist carries that assumption. A pass covers the bundle, not
+the evidence's `CpuQuote.platform` label that the key broker's
+`cpu_platform_allowed` check reads: making sure the manifest's required
+platform matches the verified hardware is the caller's job.
+
+Provisional: the hardware evidence is nine bundles from Azure DCesv6 TDs in
+westus3, one from a fork build on 2026-09-16 and eight from earlier builds
+of this provider on 2026-10-16 and 2026-10-21, and the verifier accepts all
+nine offline. No hardware run used this exact revision, and one person made
+and checked the captures. They are not committed: their signed HCL claims
+carry the VM's unique ID and vTPM endorsement key, which cannot be removed
+without breaking the signature, so the tests use synthetic bundles. Freshness is
+only as good as whoever issues the challenge nonce, and it covers the AK-signed
+TPM quote only: the DCAP quote and the HCL this provider produces do not bind the
+challenge, so they show which TD the attestation key belongs to, not when they,
+or the MRTD and TCB they report, were produced.
+An older HCL and DCAP quote presented with a fresh TPM quote under the same
+attestation key are therefore accepted.
+
+The opt-in provider's `CpuQuote.quote_b64` is a base64
+`wcm-azure-tdx-vtpm/v1` JSON bundle containing the DCAP quote, HCL blob, AK and
+TPM quote, and must be passed to `AzureTdxVtpmVerifier`. `wcm verify-quote
+--kind tdx` refuses that bundle unless `--dcap-only` narrows the check to its
+inner DCAP quote. In that mode it prints `scope : dcap-only` and checks nothing
+about the vTPM quote, freshness or paravisor measurement. Raw DCAP from the
+default provider continues through the CLI's existing TDX verification path.
+
 ## 0.33.1 - 2026-10-19
 
 **Fixed, security (GHSA-99p4-597j-8m5m).** The canonicalizer NFC-normalized
@@ -93,56 +148,6 @@ external GCP C3 SEAM SVN 15 capture, with a separately staged public Intel root,
 nonce-digest binding, pinned clock and all six refusal controls. The corpus now
 has 104 vectors (44 at L2). This is offline replay, not fresh hardware acceptance,
 transport-key binding or complete TCB/revocation appraisal.
-
-**Added, provisional.** Azure Intel TDX evidence can carry a vTPM quote bound to
-a challenge nonce and a transport key, by constructing
-`AzureTdxVtpmProvider(vtpm_bundle=True)`. The opt-in path resets and extends
-SHA-256 PCR 23 with the serving-image digest and takes a quote over PCR 23
-under the attestation key the HCL names, with
-`sha256(nonce || transport key)` as qualifying data. The default
-`AzureTdxVtpmProvider()` remains compatible with 0.32.0: it returns the raw
-DCAP quote, performs no PCR mutation or AK quote, and needs no additional TPM
-tools. That raw quote's REPORT_DATA carries the HCL runtime-data hash rather
-than a nonce, so a captured default-provider quote replays.
-
-The new `AzureTdxVtpmVerifier(trust_store, *, paravisor_measurements)` takes the
-operator's allowlist of TD launch measurements (MRTD), with the same rules as
-`AzureSnpVtpmVerifier`'s `paravisor_measurements`: required, no default, and an
-empty set refused at construction. It checks the DCAP quote, that the HCL agrees
-with it, the MRTD and debug attributes, the `HCLAkPub` attestation key (#173's
-rules), and a TPM quote over exactly SHA-256 PCR 23 that binds the nonce and
-transport key. `QuoteVerification.snp_report` stays `None`, so
-`platform_integrity` remains SEV-SNP-only.
-
-A pass means an Intel-attested TD whose launch measurement is on the operator's
-allowlist; the HCL's claim about the attestation key is that image's. MRTD
-identifies the launched image, not the host or operator, so the allowlist is one
-the operator maintains. As on the SEV-SNP path, PCR 23 binds the digest the
-guest supplied, not the code that runs. TDX has no VMPL, so the verifier assumes
-the allowlisted image is the only software in the TD that can request a TD
-report.
-
-Provisional: the hardware evidence is nine bundles from Azure DCesv6 TDs in
-westus3, one from a fork build on 2026-09-16 and eight from earlier builds
-of this provider on 2026-10-16 and 2026-10-21, and the verifier accepts all
-nine offline. No hardware run used this exact revision, and one person made
-and checked the captures. They are not committed: their signed HCL claims
-carry the VM's unique ID and vTPM endorsement key, which cannot be removed
-without breaking the signature, so the tests use synthetic bundles. Freshness is
-only as good as whoever issues the challenge nonce, and it covers the AK-signed
-TPM quote only: the DCAP quote and the HCL carry no nonce, so they show which TD
-the attestation key belongs to, not when they, or the MRTD and TCB they report,
-were produced.
-An older HCL and DCAP quote presented with a fresh TPM quote under the same
-attestation key are therefore accepted.
-
-The opt-in provider's `CpuQuote.quote_b64` is a base64
-`wcm-azure-tdx-vtpm/v1` JSON bundle containing the DCAP quote, HCL blob, AK and
-TPM quote, and must be passed to `AzureTdxVtpmVerifier`. `wcm verify-quote
---kind tdx` refuses that bundle unless `--dcap-only` narrows the check to its
-inner DCAP quote. In that mode it prints `scope : dcap-only` and checks nothing
-about the vTPM quote, freshness or paravisor measurement. Raw DCAP from the
-default provider continues through the CLI's existing TDX verification path.
 
 ## 0.32.0 - 2026-10-15
 

@@ -562,7 +562,7 @@ class AzureTdxVtpmVerifier:
     is on that allowlist; the HCL's claim about the attestation key is that
     image's. MRTD identifies the launched image, not the host or the
     operator: the same image launched on another TDX host has the same MRTD,
-    and on the westus3 capture MRCONFIGID, MROWNER and MROWNERCONFIG are all
+    and on every capture so far MRCONFIGID, MROWNER and MROWNERCONFIG are all
     zero. MRTD can differ between captures (Azure TDX
     captures have shown different MRTDs), so this is an allowlist the operator maintains, not
     a constant.
@@ -572,7 +572,8 @@ class AzureTdxVtpmVerifier:
     every check ``verify_tdx_quote`` makes (Intel TD QE identity, PCK chain to
     a root in the trust store) but ``expected_nonce=None``, because
     REPORT_DATA carries the runtime-data hash, not a nonce; the HCL's sizes,
-    padding and header values; that every field of the Intel-signed TD report
+    padding and five of its header values (the header's last 16 bytes are
+    not checked); that every field of the Intel-signed TD report
     body equals the corresponding field of the TDREPORT in the HCL; that MRTD
     is allowed; that the TD attributes do not allow debugging; that the signed
     REPORT_DATA is the SHA-256 of the HCL runtime JSON with a zero tail; that
@@ -591,7 +592,8 @@ class AzureTdxVtpmVerifier:
       nonce the producer was handed, fresh to a relying party only if that
       party's own ``Challenge`` minted it.
     - That the DCAP quote or the HCL is fresh: only the AK-signed TPM quote
-      carries the nonce. The DCAP quote and the HCL show which TD the AK
+      binds the challenge; the DCAP quote and the HCL this provider produces
+      do not. The DCAP quote and the HCL show which TD the AK
       belongs to, not when they, or the MRTD and TCB they report, were
       produced.
     - That the approved image is the code running: PCR 23 binds the digest
@@ -599,10 +601,21 @@ class AzureTdxVtpmVerifier:
       with the approved digest.
     - The AK-to-TD link is the claim of the allowlisted image, signed by
       Intel; that image is a trusted component.
-    - That only the allowlisted image could request the TD report. TDX has no
-      VMPL, so nothing in the evidence shows which software in the TD
-      requested it; the verifier assumes the allowlisted image is the only
-      software there that can.
+    - That the guest could not choose the attestation key. TDX has no VMPL,
+      so nothing in the evidence shows which software in the TD requested
+      the report. In the public OpenHCL and Intel TDX-module sources, guest
+      software cannot request a TD report itself; it can make the paravisor
+      issue one and supply its 64-byte user-data, but the attestation key
+      in the runtime claims is the paravisor's. Those sources are not tied
+      to the MRTDs observed, so the allowlist carries this assumption.
+    - Expected values for TD report fields other than MRTD and the DEBUG
+      attribute. MRSIGNERSEAM, SEAMATTRIBUTES, the other TD attributes, XFAM,
+      MRCONFIGID, MROWNER, MROWNERCONFIG and the RTMRs are compared with the
+      signed body but not pinned.
+    - The platform the evidence claims. The result covers the bundle, not the
+      evidence's ``CpuQuote.platform`` label, which a key broker reads for
+      ``cpu_platform_allowed``; making sure the manifest's required platform
+      matches the verified hardware is the caller's job.
     - RTMRs and TCB status are not appraised, and no Intel collateral (TCB
       info, QE identity collateral, CRLs) is evaluated. ``snp_report`` stays
       ``None``: there is no SNP report, and ``platform_integrity`` is

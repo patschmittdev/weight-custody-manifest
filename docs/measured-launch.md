@@ -54,7 +54,7 @@ The opt-in Azure Intel TDX path uses the same contract.
 `AzureTdxVtpmProvider(vtpm_bundle=True)` performs the same reset, extend and
 quote, and `AzureTdxVtpmVerifier` additionally requires the quote to select
 SHA-256 PCR 23 and nothing else. The default `AzureTdxVtpmProvider()` returns
-raw DCAP as it did in 0.32.0 and does not reset or extend PCR 23. The bundle
+raw DCAP as released versions do and does not reset or extend PCR 23. The bundle
 path is provisional: nine bundles from Azure TDX VMs (a fork build of the provider on
 2026-09-16, earlier builds of it on 2026-10-16 and 2026-10-21), not committed,
 are the hardware evidence, and the verifier accepts them offline.

@@ -470,9 +470,10 @@ class AzureTdxVtpmProvider(_AzureVtpmProviderBase):
 
     Azure binds the TD report's REPORT_DATA to the vTPM runtime-data hash, not a
     caller nonce. By default, ``quote_b64`` contains the raw DCAP quote exactly
-    as it did in 0.32.0: no PCR is mutated and no AK quote tooling is required.
-    ``verify_tdx_quote`` only passes that evidence with ``expected_nonce=None``,
-    so the DCAP quote alone replays.
+    as released versions do: no PCR is mutated and no AK quote tooling is required.
+    ``verify_tdx_quote`` checks that evidence with ``expected_nonce=None`` and
+    cannot bind it to a relying party's challenge, so the DCAP quote alone
+    replays.
 
     Construct ``AzureTdxVtpmProvider(vtpm_bundle=True)`` to opt in to the
     provisional freshness bundle. That path resets and extends SHA-256 PCR 23
@@ -554,7 +555,7 @@ class AzureTdxVtpmProvider(_AzureVtpmProviderBase):
         hcl = self._fetch_hcl()
         off = self._HCL_TDREPORT_OFFSET
         # The opt-in path needs the complete HCL to verify the bundle. Keep the
-        # default path's 0.32.0 slicing behavior unchanged.
+        # default path's slicing behavior as released.
         if self._vtpm_bundle and (
             hcl[:4] != b"HCLA"
             or len(hcl) < off + self._TDREPORT_LEN
