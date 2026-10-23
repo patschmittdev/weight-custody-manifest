@@ -328,10 +328,11 @@ def unwrap_azure_tdx_vtpm_bundle(quote_b64: str) -> AzureTdxVtpmBundle:
     the JSON themselves. It verifies nothing.
 
     Raises ``ValueError`` on any shape problem: not strict base64, not JSON,
-    not an object, the wrong ``kind``, or a missing or undecodable member.
+    duplicate object keys, not an object, the wrong ``kind``, or a missing or
+    undecodable member.
     """
     try:
-        doc = json.loads(_b64(quote_b64))
+        doc = json.loads(_b64(quote_b64), object_pairs_hook=_unique_object)
     except (ValueError, TypeError, RecursionError) as exc:
         raise ValueError(f"invalid Azure vTPM evidence: {exc}") from exc
     if not isinstance(doc, dict):
@@ -459,14 +460,26 @@ def _tdx_hcl_authenticated_ak(
     """Build the TPM quote key from ``HCLAkPub``, or return ``(None, reason)``.
 
     Call only after the signed REPORT_DATA has been checked against
-    ``sha256(runtime_json)``. The rules are #173's: ``kty`` RSA, unpadded
-    base64url ``n`` and ``e``, ``e`` = 65537, a modulus of at least 2048
+    ``sha256(runtime_json)``. Refuses duplicate JSON object keys and private
+    or symmetric JWK members, as #223 requires for the other evidence paths;
+    otherwise the rules are #173's: ``kty`` RSA, canonical
+    Base64urlUInt ``n`` and ``e``, ``e`` = 65537, a modulus of at least 2048
     bits, and ``ak_pem`` naming exactly the same key; the key returned is
     built from ``HCLAkPub``, never taken from ``ak_pem``.
     """
     try:
-        runtime_doc = json.loads(runtime_json)
-        jwk = next(k for k in runtime_doc["keys"] if k["kid"] == "HCLAkPub")
+        runtime_doc = json.loads(runtime_json, object_pairs_hook=_unique_object)
+        if not isinstance(runtime_doc, dict):
+            raise ValueError("HCL runtime JSON must be a JSON object")
+        jwk = next(
+            k for k in runtime_doc["keys"]
+            if isinstance(k, dict) and k.get("kid") == "HCLAkPub"
+        )
+        private_members = sorted(_JWK_PRIVATE_PARAMS.intersection(jwk))
+        if private_members:
+            raise ValueError(
+                f"HCLAkPub must not contain private key material ({', '.join(private_members)})"
+            )
         if jwk["kty"] != "RSA":
             raise ValueError(f"kty {jwk['kty']!r} is not RSA")
         modulus = _b64url_uint(jwk["n"])
@@ -495,7 +508,8 @@ def _tdx_verify_pcr23_quote(
     """Return a refusal reason for the AK-signed PCR 23 quote, or None if it holds.
 
     ``quote`` is a ``TPMS_ATTEST`` and ``signature_blob`` a ``TPMT_SIGNATURE``.
-    Checks, in order: the quote is TPM-generated; it selects exactly SHA-256
+    Checks, in order: the nonce is 64 lowercase hexadecimal characters;
+    the quote is TPM-generated; it selects exactly SHA-256
     PCR 23 and nothing else (a TPM's pcrDigest covers every selected PCR, so
     this narrows what is accepted rather than closing a forgery); its signed
     ``pcrDigest`` is the measured-launch value for the approved workload
@@ -503,6 +517,10 @@ def _tdx_verify_pcr23_quote(
     and ``ak`` verifies the RSASSA-PKCS1-v1_5/SHA-256 signature over the quote
     bytes. Malformed evidence is a reason, never an exception.
     """
+    try:
+        nonce = _nonce_bytes(expected_nonce)
+    except ValueError as exc:
+        return str(exc)
     try:
         if quote[:4] != b"\xffTCG" or quote[4:6] != b"\x80\x18":
             raise ValueError("not a TPM generated quote")
@@ -520,7 +538,7 @@ def _tdx_verify_pcr23_quote(
             return "expected workload measurement is required by release policy"
         if pcr_digest != expected_pcr23_digest(expected_workload_measurement):
             return "TPM PCR digest does not match the approved workload measurement"
-        if extra_data != hashlib.sha256(bytes.fromhex(expected_nonce) + channel_binding).digest():
+        if extra_data != hashlib.sha256(nonce + channel_binding).digest():
             return "TPM qualifying data does not bind nonce and transport key"
         if signature_blob[:4] != b"\x00\x14\x00\x0b":
             raise ValueError("TPM signature is not RSASSA/SHA-256")

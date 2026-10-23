@@ -278,6 +278,26 @@ def test_vq_tdx_azure_vtpm_bundle_dcap_only_is_scoped(capsys, tmp_path):
     assert "inner DCAP quote only" in out and "not checked" in out
 
 
+@pytest.mark.parametrize("member", ["kind", "tdx_quote_b64"])
+def test_vq_tdx_azure_vtpm_duplicate_bundle_member_is_a_denial(capsys, tmp_path, member):
+    import base64
+
+    path = _azure_vtpm_bundle(tmp_path, kind="wcm-azure-tdx-vtpm/v1", dcap_b64=_azure_dcap_b64())
+    args = ["verify-quote", "--kind", "tdx", path, "--dcap-only"]
+    assert main(args) == 0
+    assert "verified  : True" in capsys.readouterr().out
+    doc = json.loads(pathlib.Path(path).read_text(encoding="utf-8"))
+    raw = base64.b64decode(doc["quote_b64"]).decode()
+    duplicate = json.dumps({member: "wrong"})[:-1] + "," + raw[1:]
+    doc["quote_b64"] = base64.b64encode(duplicate.encode()).decode()
+    pathlib.Path(path).write_text(json.dumps(doc), encoding="utf-8")
+    assert main(args) == 1
+    output = capsys.readouterr()
+    assert "verified  : False" in output.out
+    assert f"duplicate JSON object key {member!r}" in output.out
+    assert "Traceback" not in output.out + output.err
+
+
 def test_vq_tdx_azure_vtpm_bundle_with_leading_whitespace_is_recognised(capsys, tmp_path):
     import base64
 

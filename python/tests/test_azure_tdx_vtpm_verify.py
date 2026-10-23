@@ -182,6 +182,7 @@ def _bundle(
     report_type_byte: int = 0x81,
     jwk: dict | None = None,
     runtime_json_override: bytes | None = None,
+    ak_key: rsa.RSAPrivateKey | None = None,
     mrtd: bytes = MRTD,
     td_attributes: int = 0x10000000,
     report_data_tail: bytes = bytes(32),
@@ -199,7 +200,8 @@ def _bundle(
     carries; ``hcl_tdreport_change`` (offset, xor) then alters the HCL's copy
     only, after signing.
     """
-    ak_key = rsa.generate_private_key(public_exponent=65537, key_size=2048)
+    if ak_key is None:
+        ak_key = rsa.generate_private_key(public_exponent=65537, key_size=2048)
     runtime_key = (
         rsa.generate_private_key(public_exponent=65537, key_size=2048) if wrong_ak else ak_key
     )
@@ -297,6 +299,17 @@ def test_azure_tdx_vtpm_full_chain_verifies():
 
 
 # -- bundle shape -------------------------------------------------------------
+
+
+@pytest.mark.parametrize("member", ["kind", "tdx_quote_b64"])
+def test_azure_tdx_vtpm_rejects_duplicate_bundle_member(member):
+    bundle, trust = _bundle()
+    assert _verify(bundle, trust).verified
+    raw = base64.b64decode(bundle).decode()
+    duplicate = json.dumps({member: "wrong"})[:-1] + "," + raw[1:]
+    result = _verify(base64.b64encode(duplicate.encode()).decode(), trust)
+    assert not result.verified
+    assert result.reason == f"invalid Azure vTPM evidence: duplicate JSON object key {member!r}"
 
 
 def test_azure_tdx_vtpm_rejects_wrong_kind():
@@ -399,6 +412,19 @@ def test_azure_tdx_vtpm_requires_intel_td_quoting_enclave():
 # -- HCL runtime data and the AK link -----------------------------------------
 
 
+def test_azure_tdx_vtpm_rejects_duplicate_runtime_kid():
+    ak_key = rsa.generate_private_key(public_exponent=65537, key_size=2048)
+    runtime = _runtime_json(ak_key.public_key().public_numbers().n)
+    bundle, trust = _bundle(ak_key=ak_key, runtime_json_override=runtime)
+    assert _verify(bundle, trust).verified
+    duplicate = runtime.replace(b'"kid":"HCLAkPub"', b'"kid":"wrong","kid":"HCLAkPub"', 1)
+    # Both the TDREPORT and the DCAP signature bind the duplicate-bearing JSON.
+    bundle, trust = _bundle(ak_key=ak_key, runtime_json_override=duplicate)
+    result = _verify(bundle, trust)
+    assert not result.verified
+    assert result.reason == "invalid HCLAkPub: duplicate JSON object key 'kid'"
+
+
 def test_azure_tdx_vtpm_rejects_truncated_runtime_data():
     bundle, trust = _bundle(truncate_runtime_to=10)
     result = _verify(bundle, trust)
@@ -453,6 +479,24 @@ def test_azure_tdx_vtpm_rejects_runtime_json_without_hclakpub():
 
 
 # -- #173 HCLAkPub rules ---------------------------------------------------------
+
+
+@pytest.mark.parametrize("member", ["d", "p", "q", "dp", "dq", "qi", "oth", "k"])
+@pytest.mark.parametrize("value", ["AQAB", None], ids=["value", "null"])
+def test_azure_tdx_vtpm_rejects_private_jwk_member(member, value):
+    ak_key = rsa.generate_private_key(public_exponent=65537, key_size=2048)
+    runtime = _runtime_json(ak_key.public_key().public_numbers().n)
+    bundle, trust = _bundle(ak_key=ak_key, runtime_json_override=runtime)
+    assert _verify(bundle, trust).verified
+    doc = json.loads(runtime)
+    doc["keys"][0][member] = [] if member == "oth" and value is not None else value
+    # Preserve present-null members and sign the altered runtime data.
+    bundle, trust = _bundle(ak_key=ak_key, runtime_json_override=json.dumps(doc).encode())
+    result = _verify(bundle, trust)
+    assert not result.verified
+    assert result.reason == (
+        f"invalid HCLAkPub: HCLAkPub must not contain private key material ({member})"
+    )
 
 
 def test_azure_tdx_vtpm_rejects_hcl_ak_with_non_default_exponent():
@@ -581,6 +625,47 @@ def test_azure_tdx_vtpm_rejects_ak_pem_with_matching_modulus_other_exponent():
 
 
 # -- the vTPM PCR 23 quote ----------------------------------------------------
+
+
+@pytest.mark.parametrize(
+    "nonce",
+    ["AB" * 32, "ab " * 32, NONCE + "\n", "ab" * 31, "ab" * 33, "", 123, None, b"ab" * 32],
+    ids=["uppercase", "whitespace", "newline", "short", "long", "empty", "int", "null", "bytes"],
+)
+def test_azure_tdx_vtpm_rejects_malformed_expected_nonce(nonce):
+    bundle, trust = _bundle()
+    assert _verify(bundle, trust, expected_nonce=NONCE).verified
+    wrong = _verify(bundle, trust, expected_nonce="ef" * 32)
+    assert not wrong.verified
+    assert wrong.reason == "TPM qualifying data does not bind nonce and transport key"
+    result = _verify(bundle, trust, expected_nonce=nonce)
+    assert not result.verified
+    assert result.reason == "expected_nonce must be 64 lowercase hexadecimal characters"
+
+
+@pytest.mark.parametrize(
+    "bundle_kwargs, quote_override, reason",
+    [
+        ({}, b"invalid", "TPM quote verification failed: not a TPM generated quote"),
+        ({"no_pcr23": True}, None, "TPM quote does not select exactly SHA-256 PCR 23"),
+        (
+            {"pcr_digest": bytes(32)},
+            None,
+            "TPM PCR digest does not match the approved workload measurement",
+        ),
+    ],
+    ids=["parsing", "selection", "pcr-digest"],
+)
+def test_azure_tdx_vtpm_checks_nonce_before_tpm_evidence(bundle_kwargs, quote_override, reason):
+    bundle, trust = _bundle(**bundle_kwargs)
+    if quote_override is not None:
+        bundle = _redo(bundle, tpm_quote_b64=base64.b64encode(quote_override).decode())
+    evidence_result = _verify(bundle, trust, expected_nonce=NONCE)
+    assert not evidence_result.verified
+    assert evidence_result.reason == reason
+    result = _verify(bundle, trust, expected_nonce="AB" * 32)
+    assert not result.verified
+    assert result.reason == "expected_nonce must be 64 lowercase hexadecimal characters"
 
 
 def test_azure_tdx_vtpm_rejects_wrong_nonce_binding():

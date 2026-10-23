@@ -26,7 +26,11 @@ empty set refused at construction. It checks the DCAP quote, that the HCL agrees
 with it, the MRTD and debug attributes, the `HCLAkPub` attestation key (#173's
 rules), and a TPM quote over exactly SHA-256 PCR 23 that binds the nonce and
 transport key. `QuoteVerification.snp_report` stays `None`, so
-`platform_integrity` remains SEV-SNP-only.
+`platform_integrity` remains SEV-SNP-only. As #223 requires for the other
+evidence paths, it refuses duplicate JSON object keys in the bundle and the HCL
+runtime data, private or symmetric `HCLAkPub` members, and an `expected_nonce`
+that is not 64 lowercase hexadecimal characters; malformed input is a refusal
+with a reason, not an exception.
 
 A pass means an Intel-attested TD whose launch measurement is on the operator's
 allowlist; the HCL's claim about the attestation key is that image's. MRTD
